@@ -1,4 +1,4 @@
-package com.vitbookmart.entity;
+package com.vitbookmart.dto.response;
 
 import com.vitbookmart.entity.enums.ExamSlot;
 import com.vitbookmart.entity.enums.ListingCategory;
@@ -7,27 +7,16 @@ import com.vitbookmart.entity.enums.ListingType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.bson.types.ObjectId;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "listings")
-public class Listing {
+public class ListingResponse {
 
-    @Id
-    private ObjectId id;
-
-    // ID of the user who created this listing
-    private ObjectId sellerId;
+    private String id;
 
     private String title;
 
@@ -35,21 +24,21 @@ public class Listing {
 
     private String subject;
 
-    private ListingType type;
-
-    private List<ExamSlot> unavailableExamSlots = new ArrayList<>();
-
     private ListingCategory category;
+
+    private ListingType type;
 
     private Double price;
 
     private String image;
 
+    private List<ExamSlot> unavailableExamSlots;
+
     private ListingStatus status;
 
-    @CreatedDate
+    private SellerInfo seller;
+
     private LocalDateTime createdAt;
 
-    @LastModifiedDate
     private LocalDateTime updatedAt;
 }

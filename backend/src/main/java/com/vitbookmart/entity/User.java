@@ -25,6 +25,8 @@ public class User {
 
     private String email;
 
+    private String googleId;
+
     private String whatsappNumber;
 
     private Hostel hostel;

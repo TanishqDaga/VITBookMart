@@ -23,7 +23,7 @@ public class Wishlist {
     private ObjectId id;
 
     // ID of the user who owns this wishlist
-    private String userId;
+    private ObjectId userId;
 
     // IDs of listings added to the wishlist
     private List<ObjectId> listingIds = new ArrayList<>();
