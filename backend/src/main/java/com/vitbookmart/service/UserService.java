@@ -1,8 +1,10 @@
 package com.vitbookmart.service;
 
-import com.vitbookmart.entity.Hostel;
+import com.vitbookmart.dto.request.UpdateUserProfileRequest;
+import com.vitbookmart.dto.response.UserResponse;
 import com.vitbookmart.entity.User;
 import com.vitbookmart.entity.enums.UserStatus;
+import com.vitbookmart.mapper.UserMapper;
 import com.vitbookmart.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
@@ -15,6 +17,7 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     public User createUser(User user) {
 
@@ -29,50 +32,67 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public User getById(ObjectId userId) {
+    public User getEntityById(ObjectId userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() ->
+                        new IllegalArgumentException("User not found"));
     }
 
-    public User getByEmail(String email) {
+    public User getEntityByEmail(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() ->
+                        new IllegalArgumentException("User not found"));
     }
 
-    public User getByGoogleId(String googleId) {
+    public User getEntityByGoogleId(String googleId) {
         return userRepository.findByGoogleId(googleId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() ->
+                        new IllegalArgumentException("User not found"));
     }
 
-    public List<User> getAll() {
-        return userRepository.findAll();
+    public UserResponse getById(ObjectId userId) {
+        return userMapper.toResponse(getEntityById(userId));
     }
 
-    public User updateProfile(
+    public UserResponse getByEmail(String email) {
+        return userMapper.toResponse(getEntityByEmail(email));
+    }
+
+    public List<UserResponse> getAll() {
+        return userRepository.findAll()
+                .stream()
+                .map(userMapper::toResponse)
+                .toList();
+    }
+
+    public UserResponse updateProfile(
             ObjectId userId,
-            String name,
-            String whatsappNumber,
-            Hostel hostel
+            UpdateUserProfileRequest request
     ) {
-        User user = getById(userId);
 
-        user.setName(name);
-        user.setWhatsappNumber(whatsappNumber);
-        user.setHostel(hostel);
+        User user = getEntityById(userId);
 
-        return userRepository.save(user);
+        userMapper.updateEntity(user, request);
+
+        return userMapper.toResponse(
+                userRepository.save(user)
+        );
     }
 
     public boolean isProfileComplete(User user) {
+
         return hasText(user.getName())
                 && hasText(user.getEmail())
                 && hasText(user.getWhatsappNumber())
-                && isValidHostel(user.getHostel());
+                && user.getHostel() != null
+                && hasText(user.getHostel().getType())
+                && hasText(user.getHostel().getBlock())
+                && hasText(user.getHostel().getRoom());
     }
 
     public void validateProfileComplete(ObjectId userId) {
 
-        User user = getById(userId);
+        User user = getEntityById(userId);
 
         if (!isProfileComplete(user)) {
             throw new IllegalStateException(
@@ -88,13 +108,6 @@ public class UserService {
         }
 
         userRepository.deleteById(userId);
-    }
-
-    private boolean isValidHostel(Hostel hostel) {
-        return hostel != null
-                && hasText(hostel.getType())
-                && hasText(hostel.getBlock())
-                && hasText(hostel.getRoom());
     }
 
     private boolean hasText(String value) {

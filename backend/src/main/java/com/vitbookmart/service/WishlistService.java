@@ -1,7 +1,11 @@
 package com.vitbookmart.service;
 
+import com.vitbookmart.dto.response.ListingResponse;
+import com.vitbookmart.dto.response.WishlistResponse;
 import com.vitbookmart.entity.Listing;
 import com.vitbookmart.entity.Wishlist;
+import com.vitbookmart.mapper.ListingMapper;
+import com.vitbookmart.mapper.WishlistMapper;
 import com.vitbookmart.repository.ListingRepository;
 import com.vitbookmart.repository.WishlistRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,41 +21,49 @@ public class WishlistService {
 
     private final WishlistRepository wishlistRepository;
     private final ListingRepository listingRepository;
+    private final ListingMapper listingMapper;
+    private final WishlistMapper wishlistMapper;
 
-    public Wishlist getWishlist(ObjectId userId) {
+    public WishlistResponse getWishlist(ObjectId userId) {
 
-        return wishlistRepository.findByUserId(userId)
+        Wishlist wishlist = wishlistRepository.findByUserId(userId)
                 .orElseGet(() -> createWishlist(userId));
+
+        return toResponse(wishlist);
     }
 
-    public Wishlist addToWishlist(ObjectId userId, ObjectId listingId) {
-
-        // Make sure listing exists
-        if (!listingRepository.existsById(listingId)) {
-            throw new IllegalArgumentException("Listing not found");
-        }
-
-        Wishlist wishlist = getWishlist(userId);
-
-        if (wishlist.getListingIds().contains(listingId)) {
-            return wishlist;
-        }
-
-        wishlist.getListingIds().add(listingId);
-
-        return wishlistRepository.save(wishlist);
-    }
-
-    public Wishlist removeFromWishlist(
+    public WishlistResponse addToWishlist(
             ObjectId userId,
             ObjectId listingId
     ) {
 
-        Wishlist wishlist = getWishlist(userId);
+        if (!listingRepository.existsById(listingId)) {
+            throw new IllegalArgumentException("Listing not found");
+        }
+
+        Wishlist wishlist = wishlistRepository.findByUserId(userId)
+                .orElseGet(() -> createWishlist(userId));
+
+        if (!wishlist.getListingIds().contains(listingId)) {
+            wishlist.getListingIds().add(listingId);
+            wishlist = wishlistRepository.save(wishlist);
+        }
+
+        return toResponse(wishlist);
+    }
+
+    public WishlistResponse removeFromWishlist(
+            ObjectId userId,
+            ObjectId listingId
+    ) {
+
+        Wishlist wishlist = getEntityByUserId(userId);
 
         wishlist.getListingIds().remove(listingId);
 
-        return wishlistRepository.save(wishlist);
+        wishlist = wishlistRepository.save(wishlist);
+
+        return toResponse(wishlist);
     }
 
     public boolean isWishlisted(
@@ -59,18 +71,29 @@ public class WishlistService {
             ObjectId listingId
     ) {
 
-        return getWishlist(userId)
-                .getListingIds()
-                .contains(listingId);
+        Wishlist wishlist = wishlistRepository
+                .findByUserId(userId)
+                .orElse(null);
+
+        return wishlist != null
+                && wishlist.getListingIds().contains(listingId);
     }
 
-    public void clearWishlist(ObjectId userId) {
+    public WishlistResponse clearWishlist(ObjectId userId) {
 
-        Wishlist wishlist = getWishlist(userId);
+        Wishlist wishlist = getEntityByUserId(userId);
 
         wishlist.setListingIds(new ArrayList<>());
 
-        wishlistRepository.save(wishlist);
+        wishlist = wishlistRepository.save(wishlist);
+
+        return toResponse(wishlist);
+    }
+
+    private Wishlist getEntityByUserId(ObjectId userId) {
+
+        return wishlistRepository.findByUserId(userId)
+                .orElseGet(() -> createWishlist(userId));
     }
 
     private Wishlist createWishlist(ObjectId userId) {
@@ -81,5 +104,21 @@ public class WishlistService {
         wishlist.setListingIds(new ArrayList<>());
 
         return wishlistRepository.save(wishlist);
+    }
+
+    private WishlistResponse toResponse(Wishlist wishlist) {
+
+        List<Listing> listings = listingRepository.findAllById(
+                wishlist.getListingIds()
+        );
+
+        List<ListingResponse> listingResponses = listings.stream()
+                .map(listingMapper::toResponse)
+                .toList();
+
+        return wishlistMapper.toResponse(
+                wishlist,
+                listingResponses
+        );
     }
 }

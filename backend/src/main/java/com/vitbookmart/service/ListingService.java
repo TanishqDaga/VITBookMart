@@ -1,8 +1,15 @@
 package com.vitbookmart.service;
 
+import com.vitbookmart.dto.request.CreateListingRequest;
+import com.vitbookmart.dto.request.UpdateListingRequest;
+import com.vitbookmart.dto.response.ListingDetailResponse;
+import com.vitbookmart.dto.response.ListingResponse;
+import com.vitbookmart.dto.response.SellerInfo;
 import com.vitbookmart.entity.Listing;
+import com.vitbookmart.entity.User;
 import com.vitbookmart.entity.enums.ListingStatus;
 import com.vitbookmart.entity.enums.ListingType;
+import com.vitbookmart.mapper.ListingMapper;
 import com.vitbookmart.repository.ListingRepository;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
@@ -16,87 +23,107 @@ public class ListingService {
 
     private final ListingRepository listingRepository;
     private final UserService userService;
+    private final ListingMapper listingMapper;
 
-    public Listing createListing(Listing listing, ObjectId sellerId) {
+    public ListingResponse createListing(
+            ObjectId sellerId,
+            CreateListingRequest request
+    ) {
 
         userService.validateProfileComplete(sellerId);
 
+        Listing listing = listingMapper.toEntity(request, sellerId);
+
         validateListing(listing);
 
-        listing.setSellerId(sellerId);
+        listing.setStatus(ListingStatus.AVAILABLE);
 
-        if (listing.getStatus() == null) {
-            listing.setStatus(ListingStatus.AVAILABLE);
-        }
-
-        return listingRepository.save(listing);
+        return toListingResponse(listingRepository.save(listing));
     }
 
-    public Listing getById(ObjectId listingId) {
+    public ListingDetailResponse getById(ObjectId listingId) {
 
-        return listingRepository.findById(listingId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Listing not found"));
-    }
+        Listing listing = getEntityById(listingId);
 
-    public List<Listing> getAll() {
-        return listingRepository.findAll();
-    }
+        User seller = userService.getEntityById(listing.getSellerId());
 
-    public List<Listing> getBySeller(ObjectId sellerId) {
-        return listingRepository.findBySellerId(sellerId);
-    }
-
-    public List<Listing> getAvailableListings() {
-        return listingRepository.findByStatus(ListingStatus.AVAILABLE);
-    }
-
-    public List<Listing> searchByTitle(String title) {
-        return listingRepository.findByTitleContainingIgnoreCase(title);
-    }
-
-    public List<Listing> searchBySubject(String subject) {
-        return listingRepository.findBySubjectContainingIgnoreCase(subject);
-    }
-
-    public Listing updateListing(
-            ObjectId listingId,
-            ObjectId sellerId,
-            Listing updatedListing
-    ) {
-
-        Listing existingListing = getById(listingId);
-
-        validateOwnership(existingListing, sellerId);
-        validateListing(updatedListing);
-
-        existingListing.setTitle(updatedListing.getTitle());
-        existingListing.setDescription(updatedListing.getDescription());
-        existingListing.setSubject(updatedListing.getSubject());
-        existingListing.setCategory(updatedListing.getCategory());
-        existingListing.setType(updatedListing.getType());
-        existingListing.setPrice(updatedListing.getPrice());
-        existingListing.setImage(updatedListing.getImage());
-        existingListing.setStatus(updatedListing.getStatus());
-        existingListing.setUnavailableExamSlots(
-                updatedListing.getUnavailableExamSlots()
+        SellerInfo sellerInfo = new SellerInfo(
+                seller.getName(),
+                seller.getHostel()
         );
 
-        return listingRepository.save(existingListing);
+        return listingMapper.toDetailResponse(listing, sellerInfo);
     }
 
-    public Listing markAsSold(
+    public List<ListingResponse> getAll() {
+
+        return listingRepository.findAll()
+                .stream()
+                .map(this::toListingResponse)
+                .toList();
+    }
+
+    public List<ListingResponse> getAllAvailableListings() {
+
+        return listingRepository.findByStatus(ListingStatus.AVAILABLE)
+                .stream()
+                .map(this::toListingResponse)
+                .toList();
+    }
+
+    public List<ListingResponse> getBySeller(ObjectId sellerId) {
+
+        return listingRepository.findBySellerId(sellerId)
+                .stream()
+                .map(this::toListingResponse)
+                .toList();
+    }
+
+    public List<ListingResponse> searchByTitle(String title) {
+
+        return listingRepository.findByTitleContainingIgnoreCase(title)
+                .stream()
+                .map(this::toListingResponse)
+                .toList();
+    }
+
+    public List<ListingResponse> searchBySubject(String subject) {
+
+        return listingRepository.findBySubjectContainingIgnoreCase(subject)
+                .stream()
+                .map(this::toListingResponse)
+                .toList();
+    }
+
+    public ListingResponse updateListing(
+            ObjectId listingId,
+            ObjectId sellerId,
+            UpdateListingRequest request
+    ) {
+
+        Listing listing = getEntityById(listingId);
+
+        validateOwnership(listing, sellerId);
+
+        listingMapper.updateEntity(listing, request);
+
+        validateListing(listing);
+
+        return toListingResponse(listingRepository.save(listing));
+    }
+
+    public ListingResponse markAsSold(
             ObjectId listingId,
             ObjectId sellerId
     ) {
 
-        Listing listing = getById(listingId);
+        Listing listing = getEntityById(listingId);
 
         validateOwnership(listing, sellerId);
 
         listing.setStatus(ListingStatus.SOLD);
 
-        return listingRepository.save(listing);
+        return toListingResponse(listingRepository.save(listing));
     }
 
     public void deleteListing(
@@ -104,23 +131,22 @@ public class ListingService {
             ObjectId sellerId
     ) {
 
-        Listing listing = getById(listingId);
+        Listing listing = getEntityById(listingId);
 
         validateOwnership(listing, sellerId);
 
         listingRepository.deleteById(listingId);
     }
 
-    private void validateOwnership(
-            Listing listing,
-            ObjectId sellerId
-    ) {
+    public Listing getEntityById(ObjectId listingId) {
 
-        if (!listing.getSellerId().equals(sellerId)) {
-            throw new IllegalArgumentException(
-                    "You are not the owner of this listing"
-            );
-        }
+        return listingRepository.findById(listingId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Listing not found"));
+    }
+
+    private ListingResponse toListingResponse(Listing listing) {
+        return listingMapper.toResponse(listing);
     }
 
     private void validateListing(Listing listing) {
@@ -159,30 +185,20 @@ public class ListingService {
     private void validateExamSlots(Listing listing) {
 
         if (listing.getType() == ListingType.SALE) {
-
-            if (listing.getUnavailableExamSlots() != null
-                    && !listing.getUnavailableExamSlots().isEmpty()) {
-
-                throw new IllegalArgumentException(
-                        "Unavailable exam slots are only allowed for rental listings"
-                );
-            }
-
-            return;
+            listing.setUnavailableExamSlots(List.of());
         }
+    }
 
-        if (listing.getUnavailableExamSlots() == null) {
-            return;
-        }
+    private void validateOwnership(
+            Listing listing,
+            ObjectId sellerId
+    ) {
 
-        long uniqueSlots = listing.getUnavailableExamSlots()
-                .stream()
-                .distinct()
-                .count();
+        if (listing.getSellerId() == null
+                || !listing.getSellerId().equals(sellerId)) {
 
-        if (uniqueSlots != listing.getUnavailableExamSlots().size()) {
             throw new IllegalArgumentException(
-                    "Duplicate exam slots are not allowed"
+                    "You are not the owner of this listing"
             );
         }
     }
