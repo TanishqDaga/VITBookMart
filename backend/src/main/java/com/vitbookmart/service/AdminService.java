@@ -49,11 +49,7 @@ public class AdminService {
         return adminRepository.findAll();
     }
 
-    public Admin updateProfile(
-            ObjectId adminId,
-            String name,
-            String email
-    ) {
+    public Admin updateProfile(ObjectId adminId, String name, String email) {
 
         Admin admin = getById(adminId);
 
@@ -61,14 +57,10 @@ public class AdminService {
             admin.setName(name);
         }
 
-        if (email != null
-                && !email.isBlank()
-                && !email.equals(admin.getEmail())) {
+        if (email != null && !email.isBlank() && !email.equals(admin.getEmail())) {
 
             if (adminRepository.existsByEmail(email)) {
-                throw new IllegalArgumentException(
-                        "Email already belongs to another admin"
-                );
+                throw new IllegalArgumentException("Email already belongs to another admin");
             }
 
             admin.setEmail(email);
@@ -90,8 +82,7 @@ public class AdminService {
 
     public User getUser(ObjectId userId) {
 
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        return userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
     }
 
     public List<User> getAllUsers() {
@@ -167,7 +158,7 @@ public class AdminService {
         existingListing.setCategory(updatedListing.getCategory());
         existingListing.setType(updatedListing.getType());
         existingListing.setPrice(updatedListing.getPrice());
-        existingListing.setImage(updatedListing.getImage());
+        existingListing.setImageUrl(updatedListing.getImageUrl());
         existingListing.setUnavailableExamSlots(
                 updatedListing.getUnavailableExamSlots()
         );

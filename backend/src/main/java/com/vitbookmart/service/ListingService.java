@@ -12,29 +12,63 @@ import com.vitbookmart.entity.enums.ListingType;
 import com.vitbookmart.mapper.ListingMapper;
 import com.vitbookmart.repository.ListingRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ListingService {
 
     private final ListingRepository listingRepository;
     private final UserService userService;
     private final ListingMapper listingMapper;
+    private final ImageService imageService;
 
-    public ListingResponse createListing(
-            ObjectId sellerId,
-            CreateListingRequest request
-    ) {
+    private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
+    private void validateImage(MultipartFile image) {
+
+        if (image == null || image.isEmpty()) {
+            throw new IllegalArgumentException("Image is required");
+        }
+
+        if (image.getSize() > MAX_IMAGE_SIZE) {
+            throw new IllegalArgumentException(
+                    "Image size must be less than 5 MB"
+            );
+        }
+
+        String contentType = image.getContentType();
+
+        if (contentType == null ||
+                !(contentType.equals("image/jpeg") || contentType.equals("image/png") || contentType.equals("image/webp"))) {
+
+            throw new IllegalArgumentException(
+                    "Only JPG, PNG and WEBP images are allowed"
+            );
+        }
+    }
+
+    public ListingResponse createListing(ObjectId sellerId, CreateListingRequest request,MultipartFile image) throws IOException {
+        log.info("validate user");
         userService.validateProfileComplete(sellerId);
-
+        log.info("user validate");
         Listing listing = listingMapper.toEntity(request, sellerId);
 
         validateListing(listing);
+        log.info("listing validated");
+        validateImage(image);
+        log.info("image validated");
+
+        String imageUrl = imageService.uploadImage(image);
+
+        listing.setImageUrl(imageUrl);
 
         listing.setStatus(ListingStatus.AVAILABLE);
 

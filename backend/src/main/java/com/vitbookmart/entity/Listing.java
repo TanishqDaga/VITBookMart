@@ -43,7 +43,7 @@ public class Listing {
 
     private Double price;
 
-    private String image;
+    private String imageUrl;
 
     private ListingStatus status;
 

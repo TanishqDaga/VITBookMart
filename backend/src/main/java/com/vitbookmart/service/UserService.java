@@ -65,18 +65,13 @@ public class UserService {
                 .toList();
     }
 
-    public UserResponse updateProfile(
-            ObjectId userId,
-            UpdateUserProfileRequest request
-    ) {
+    public UserResponse updateProfile(ObjectId userId, UpdateUserProfileRequest request) {
 
         User user = getEntityById(userId);
 
         userMapper.updateEntity(user, request);
 
-        return userMapper.toResponse(
-                userRepository.save(user)
-        );
+        return userMapper.toResponse(userRepository.save(user));
     }
 
     public boolean isProfileComplete(User user) {
@@ -95,9 +90,7 @@ public class UserService {
         User user = getEntityById(userId);
 
         if (!isProfileComplete(user)) {
-            throw new IllegalStateException(
-                    "Complete your profile before creating a listing"
-            );
+            throw new IllegalStateException("Complete your profile before creating a listing");
         }
     }
 

@@ -30,8 +30,6 @@ public record CreateListingRequest(
         @DecimalMin(value = "0.0", message = "Price cannot be negative")
         Double price,
 
-        String image,
-
         List<ExamSlot> unavailableExamSlots
 ) {
 }

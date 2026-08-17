@@ -22,7 +22,7 @@ public record UpdateListingRequest(
         @DecimalMin(value = "0.0", message = "Price cannot be negative")
         Double price,
 
-        String image,
+        String imageUrl,
 
         List<ExamSlot> unavailableExamSlots
 ) {

@@ -15,10 +15,7 @@ import java.util.ArrayList;
 @Component
 public class ListingMapper {
 
-    public Listing toEntity(
-            CreateListingRequest request,
-            ObjectId sellerId
-    ) {
+    public Listing toEntity(CreateListingRequest request, ObjectId sellerId) {
 
         Listing listing = new Listing();
 
@@ -29,7 +26,6 @@ public class ListingMapper {
         listing.setCategory(request.category());
         listing.setType(request.type());
         listing.setPrice(request.price());
-        listing.setImage(request.image());
 
         if (request.type() == ListingType.RENT) {
 
@@ -47,10 +43,7 @@ public class ListingMapper {
         return listing;
     }
 
-    public void updateEntity(
-            Listing listing,
-            UpdateListingRequest request
-    ) {
+    public void updateEntity(Listing listing, UpdateListingRequest request) {
 
         if (request.title() != null) {
             listing.setTitle(request.title());
@@ -76,8 +69,8 @@ public class ListingMapper {
             listing.setPrice(request.price());
         }
 
-        if (request.image() != null) {
-            listing.setImage(request.image());
+        if (request.imageUrl() != null) {
+            listing.setImageUrl(request.imageUrl());
         }
 
         /*
@@ -113,7 +106,7 @@ public class ListingMapper {
                 listing.getSubject(),
                 listing.getPrice(),
                 listing.getType(),
-                listing.getImage(),
+                listing.getImageUrl(),
                 listing.getStatus(),
                 listing.getCreatedAt(),
                 listing.getUpdatedAt()
@@ -139,7 +132,7 @@ public class ListingMapper {
         response.setCategory(listing.getCategory());
         response.setType(listing.getType());
         response.setPrice(listing.getPrice());
-        response.setImage(listing.getImage());
+        response.setImageUrl(listing.getImageUrl());
         response.setStatus(listing.getStatus());
         response.setCreatedAt(listing.getCreatedAt());
         response.setUpdatedAt(listing.getUpdatedAt());
