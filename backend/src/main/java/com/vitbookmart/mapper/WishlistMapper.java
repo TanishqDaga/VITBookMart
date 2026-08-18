@@ -16,8 +16,6 @@ public class WishlistMapper {
     ) {
 
         return new WishlistResponse(
-                wishlist.getId(),
-                wishlist.getUserId(),
                 listings
         );
     }

@@ -129,11 +129,7 @@ public class ListingService {
                 .toList();
     }
 
-    public ListingResponse updateListing(
-            ObjectId listingId,
-            ObjectId sellerId,
-            UpdateListingRequest request
-    ) {
+    public ListingResponse updateListing(ObjectId listingId, ObjectId sellerId, UpdateListingRequest request) {
 
         Listing listing = getEntityById(listingId);
 

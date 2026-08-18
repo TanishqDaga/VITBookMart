@@ -86,6 +86,7 @@ public class AdminService {
     }
 
     public List<User> getAllUsers() {
+
         return userRepository.findAll();
     }
 

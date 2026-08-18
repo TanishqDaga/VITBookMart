@@ -12,9 +12,5 @@ import java.util.List;
 @AllArgsConstructor
 public class WishlistResponse {
 
-    private ObjectId id;
-
-    private ObjectId userId;
-
     private List<ListingResponse> listings;
 }

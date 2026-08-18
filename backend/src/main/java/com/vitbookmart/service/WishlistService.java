@@ -32,17 +32,13 @@ public class WishlistService {
         return toResponse(wishlist);
     }
 
-    public WishlistResponse addToWishlist(
-            ObjectId userId,
-            ObjectId listingId
-    ) {
+    public WishlistResponse addToWishlist(ObjectId userId, ObjectId listingId) {
 
         if (!listingRepository.existsById(listingId)) {
             throw new IllegalArgumentException("Listing not found");
         }
 
-        Wishlist wishlist = wishlistRepository.findByUserId(userId)
-                .orElseGet(() -> createWishlist(userId));
+        Wishlist wishlist = wishlistRepository.findByUserId(userId).orElseGet(() -> createWishlist(userId));
 
         if (!wishlist.getListingIds().contains(listingId)) {
             wishlist.getListingIds().add(listingId);

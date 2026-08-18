@@ -69,10 +69,6 @@ public class ListingMapper {
             listing.setPrice(request.price());
         }
 
-        if (request.imageUrl() != null) {
-            listing.setImageUrl(request.imageUrl());
-        }
-
         /*
          * Exam slots are applicable only to RENT listings.
          */

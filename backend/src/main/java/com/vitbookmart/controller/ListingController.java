@@ -94,10 +94,10 @@ public class ListingController {
 
     // UPDATE LISTING
 
-    @PutMapping("/{listingId}/seller/{sellerId}")
+    @PutMapping("/update/{sellerId}/{listingId}")
     public ResponseEntity<ListingResponse> updateListing(
-            @PathVariable ObjectId listingId,
             @PathVariable ObjectId sellerId,
+            @PathVariable ObjectId listingId,
             @RequestBody UpdateListingRequest request
     ) {
         return ResponseEntity.ok(listingService.updateListing(listingId, sellerId, request));
@@ -107,18 +107,10 @@ public class ListingController {
 
     // MARK LISTING AS SOLD
 
-    @PatchMapping("/{listingId}/seller/{sellerId}/sold")
-    public ResponseEntity<ListingResponse> markAsSold(
-            @PathVariable ObjectId listingId,
-            @PathVariable ObjectId sellerId
-    ) {
+    @PatchMapping("markSold/{sellerId}/{listingId}")
+    public ResponseEntity<ListingResponse> markAsSold(@PathVariable ObjectId sellerId, @PathVariable ObjectId listingId) {
 
-        return ResponseEntity.ok(
-                listingService.markAsSold(
-                        listingId,
-                        sellerId
-                )
-        );
+        return ResponseEntity.ok(listingService.markAsSold(listingId, sellerId));
     }
 
 
@@ -126,15 +118,9 @@ public class ListingController {
     // DELETE LISTING
 
     @DeleteMapping("/{listingId}/seller/{sellerId}")
-    public ResponseEntity<Void> deleteListing(
-            @PathVariable ObjectId listingId,
-            @PathVariable ObjectId sellerId
-    ) {
+    public ResponseEntity<Void> deleteListing(@PathVariable ObjectId listingId, @PathVariable ObjectId sellerId) {
 
-        listingService.deleteListing(
-                listingId,
-                sellerId
-        );
+        listingService.deleteListing(listingId, sellerId);
 
         return ResponseEntity.noContent().build();
     }

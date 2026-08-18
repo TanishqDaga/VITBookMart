@@ -7,6 +7,7 @@ import org.bson.types.ObjectId;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
@@ -23,6 +24,7 @@ public class Wishlist {
     private ObjectId id;
 
     // ID of the user who owns this wishlist
+    @Indexed(unique = true)
     private ObjectId userId;
 
     // IDs of listings added to the wishlist

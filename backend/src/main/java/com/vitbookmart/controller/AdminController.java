@@ -20,9 +20,7 @@ public class AdminController {
     private final AdminService adminService;
 
 
-    // =========================================================
     // ADMIN MANAGEMENT
-    // =========================================================
 
     // Create admin
     @PostMapping
@@ -75,9 +73,7 @@ public class AdminController {
     }
 
 
-    // =========================================================
     // USER MANAGEMENT
-    // =========================================================
 
     // Get user
     @GetMapping("/users/{userId}")
@@ -102,7 +98,7 @@ public class AdminController {
     }
 
     // Make user paid
-    @PatchMapping("/users/{userId}/paid")
+    @PatchMapping("/users/makePaid/{userId}")
     public ResponseEntity<User> makeUserPaid(@PathVariable ObjectId userId) {
 
         return ResponseEntity.ok(adminService.makeUserPaid(userId));
@@ -127,9 +123,7 @@ public class AdminController {
     }
 
 
-    // =========================================================
     // LISTING MANAGEMENT
-    // =========================================================
 
     // Get listing
     @GetMapping("/listings/{listingId}")
