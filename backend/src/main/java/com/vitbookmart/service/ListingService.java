@@ -7,6 +7,7 @@ import com.vitbookmart.dto.response.ListingResponse;
 import com.vitbookmart.dto.response.SellerInfo;
 import com.vitbookmart.entity.Listing;
 import com.vitbookmart.entity.User;
+import com.vitbookmart.entity.enums.ListingCategory;
 import com.vitbookmart.entity.enums.ListingStatus;
 import com.vitbookmart.entity.enums.ListingType;
 import com.vitbookmart.mapper.ListingMapper;
@@ -170,9 +171,7 @@ public class ListingService {
 
     public Listing getEntityById(ObjectId listingId) {
 
-        return listingRepository.findById(listingId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Listing not found"));
+        return listingRepository.findById(listingId).orElseThrow(() -> new IllegalArgumentException("Listing not found"));
     }
 
     private ListingResponse toListingResponse(Listing listing) {
@@ -185,13 +184,11 @@ public class ListingService {
             throw new IllegalArgumentException("Title is required");
         }
 
-        if (listing.getDescription() == null
-                || listing.getDescription().isBlank()) {
+        if (listing.getDescription() == null || listing.getDescription().isBlank()) {
             throw new IllegalArgumentException("Description is required");
         }
 
-        if (listing.getSubject() == null
-                || listing.getSubject().isBlank()) {
+        if (listing.getSubject() == null || listing.getSubject().isBlank()) {
             throw new IllegalArgumentException("Subject is required");
         }
 
@@ -204,9 +201,7 @@ public class ListingService {
         }
 
         if (listing.getPrice() == null || listing.getPrice() < 0) {
-            throw new IllegalArgumentException(
-                    "Price must be zero or greater"
-            );
+            throw new IllegalArgumentException("Price must be zero or greater");
         }
 
         validateExamSlots(listing);
@@ -219,17 +214,30 @@ public class ListingService {
         }
     }
 
-    private void validateOwnership(
-            Listing listing,
-            ObjectId sellerId
-    ) {
+    private void validateOwnership(Listing listing, ObjectId sellerId) {
 
-        if (listing.getSellerId() == null
-                || !listing.getSellerId().equals(sellerId)) {
+        if (listing.getSellerId() == null || !listing.getSellerId().equals(sellerId)) {
 
-            throw new IllegalArgumentException(
-                    "You are not the owner of this listing"
-            );
+            throw new IllegalArgumentException("You are not the owner of this listing");
         }
     }
+    public List<ListingResponse> getLatestListings() {
+
+        return listingRepository
+                .findByStatusOrderByCreatedAtDesc(ListingStatus.AVAILABLE)
+                .stream()
+                .map(this::toListingResponse)
+                .toList();
+    }
+
+    public List<ListingResponse> searchListings(String query, ListingType type, ListingCategory category, String sort) {
+
+        return listingRepository
+                .search(query, type, category, sort)
+                .stream()
+                .map(this::toListingResponse)
+                .toList();
+    }
+
+
 }

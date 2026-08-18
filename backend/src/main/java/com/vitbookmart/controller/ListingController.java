@@ -4,6 +4,8 @@ import com.vitbookmart.dto.request.CreateListingRequest;
 import com.vitbookmart.dto.request.UpdateListingRequest;
 import com.vitbookmart.dto.response.ListingDetailResponse;
 import com.vitbookmart.dto.response.ListingResponse;
+import com.vitbookmart.entity.enums.ListingCategory;
+import com.vitbookmart.entity.enums.ListingType;
 import com.vitbookmart.service.ListingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -123,5 +125,30 @@ public class ListingController {
         listingService.deleteListing(listingId, sellerId);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/latest")
+    public ResponseEntity<List<ListingResponse>> getLatestListings() {
+
+        return ResponseEntity.ok(listingService.getLatestListings());
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<ListingResponse>> searchListings(
+
+            @RequestParam(required = false)
+            String query,
+
+            @RequestParam(required = false)
+            ListingType type,
+
+            @RequestParam(required = false)
+            ListingCategory category,
+
+            @RequestParam(required = false, defaultValue = "latest")
+            String sort
+    ) {
+
+        return ResponseEntity.ok(listingService.searchListings(query, type, category, sort));
     }
 }

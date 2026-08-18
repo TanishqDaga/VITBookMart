@@ -7,7 +7,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
 
-public interface ListingRepository extends MongoRepository<Listing, ObjectId> {
+public interface ListingRepository extends MongoRepository<Listing, ObjectId>,ListingRepositoryCustom {
 
     List<Listing> findBySellerId(ObjectId sellerId);
 
@@ -17,5 +17,11 @@ public interface ListingRepository extends MongoRepository<Listing, ObjectId> {
 
     List<Listing> findByTitleContainingIgnoreCase(String title);
 
+    List<Listing> findByStatusOrderByCreatedAtDesc(ListingStatus status);
 
+    List<Listing> findAllByOrderByCreatedAtDesc();
+
+    List<Listing> findAllByOrderByPriceAsc();
+
+    List<Listing> findAllByOrderByPriceDesc();
 }
