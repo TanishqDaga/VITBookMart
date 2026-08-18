@@ -4,6 +4,7 @@ import com.vitbookmart.dto.request.UpdateUserProfileRequest;
 import com.vitbookmart.dto.response.UserResponse;
 import com.vitbookmart.entity.User;
 import com.vitbookmart.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.http.HttpStatus;
