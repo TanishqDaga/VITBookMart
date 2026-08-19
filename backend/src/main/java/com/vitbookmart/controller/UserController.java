@@ -51,15 +51,6 @@ public class UserController {
 
     // GET ALL USERS
 
-
-    /*
-     * ADMIN operation.
-     *
-     * For now no authentication is implemented,
-     * so it can be tested directly.
-     *
-     * Later this endpoint will be protected with ADMIN role.
-     */
     @GetMapping
     public ResponseEntity<List<UserResponse>> getAllUsers() {
 
@@ -69,7 +60,7 @@ public class UserController {
     // UPDATE USER PROFILE
 
     @PutMapping("/{userId}")
-    public ResponseEntity<UserResponse> updateProfile(@PathVariable ObjectId userId, @RequestBody UpdateUserProfileRequest request) {
+    public ResponseEntity<UserResponse> updateProfile(@PathVariable ObjectId userId, @RequestBody @Valid UpdateUserProfileRequest request) {
 
         return ResponseEntity.ok(userService.updateProfile(userId, request));
     }

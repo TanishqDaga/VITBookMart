@@ -10,6 +10,8 @@ import com.vitbookmart.entity.User;
 import com.vitbookmart.entity.enums.ListingCategory;
 import com.vitbookmart.entity.enums.ListingStatus;
 import com.vitbookmart.entity.enums.ListingType;
+import com.vitbookmart.exception.BadRequestException;
+import com.vitbookmart.exception.ResourceNotFoundException;
 import com.vitbookmart.mapper.ListingMapper;
 import com.vitbookmart.repository.ListingRepository;
 import lombok.RequiredArgsConstructor;
@@ -82,10 +84,7 @@ public class ListingService {
 
         User seller = userService.getEntityById(listing.getSellerId());
 
-        SellerInfo sellerInfo = new SellerInfo(
-                seller.getName(),
-                seller.getHostel()
-        );
+        SellerInfo sellerInfo = new SellerInfo(seller.getName(), seller.getHostel());
 
         return listingMapper.toDetailResponse(listing, sellerInfo);
     }
@@ -143,10 +142,7 @@ public class ListingService {
         return toListingResponse(listingRepository.save(listing));
     }
 
-    public ListingResponse markAsSold(
-            ObjectId listingId,
-            ObjectId sellerId
-    ) {
+    public ListingResponse markAsSold(ObjectId listingId, ObjectId sellerId) {
 
         Listing listing = getEntityById(listingId);
 
@@ -157,10 +153,7 @@ public class ListingService {
         return toListingResponse(listingRepository.save(listing));
     }
 
-    public void deleteListing(
-            ObjectId listingId,
-            ObjectId sellerId
-    ) {
+    public void deleteListing(ObjectId listingId, ObjectId sellerId) {
 
         Listing listing = getEntityById(listingId);
 
@@ -171,10 +164,11 @@ public class ListingService {
 
     public Listing getEntityById(ObjectId listingId) {
 
-        return listingRepository.findById(listingId).orElseThrow(() -> new IllegalArgumentException("Listing not found"));
+        return listingRepository.findById(listingId).orElseThrow(() -> new ResourceNotFoundException("Listing not found"));
     }
 
     private ListingResponse toListingResponse(Listing listing) {
+
         return listingMapper.toResponse(listing);
     }
 
@@ -218,7 +212,7 @@ public class ListingService {
 
         if (listing.getSellerId() == null || !listing.getSellerId().equals(sellerId)) {
 
-            throw new IllegalArgumentException("You are not the owner of this listing");
+            throw new BadRequestException("You are not the owner of this listing");
         }
     }
     public List<ListingResponse> getLatestListings() {
@@ -238,6 +232,5 @@ public class ListingService {
                 .map(this::toListingResponse)
                 .toList();
     }
-
 
 }

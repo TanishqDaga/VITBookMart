@@ -4,6 +4,9 @@ import com.vitbookmart.dto.request.UpdateUserProfileRequest;
 import com.vitbookmart.dto.response.UserResponse;
 import com.vitbookmart.entity.User;
 import com.vitbookmart.entity.enums.UserStatus;
+import com.vitbookmart.exception.BadRequestException;
+import com.vitbookmart.exception.ProfileIncompleteException;
+import com.vitbookmart.exception.ResourceNotFoundException;
 import com.vitbookmart.mapper.UserMapper;
 import com.vitbookmart.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +25,7 @@ public class UserService {
     public User createUser(User user) {
 
         if (userRepository.existsByEmail(user.getEmail())) {
-            throw new IllegalArgumentException("User already exists");
+            throw new BadRequestException("User already exists");
         }
 
         if (user.getStatus() == null) {
@@ -33,28 +36,27 @@ public class UserService {
     }
 
     public User getEntityById(ObjectId userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("User not found"));
+
+        return userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
     public User getEntityByEmail(String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("User not found"));
+
+        return userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
     public User getEntityByGoogleId(String googleId) {
-        return userRepository.findByGoogleId(googleId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("User not found"));
+
+        return userRepository.findByGoogleId(googleId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
     public UserResponse getById(ObjectId userId) {
+
         return userMapper.toResponse(getEntityById(userId));
     }
 
     public UserResponse getByEmail(String email) {
+
         return userMapper.toResponse(getEntityByEmail(email));
     }
 
@@ -90,20 +92,21 @@ public class UserService {
         User user = getEntityById(userId);
 
         if (!isProfileComplete(user)) {
-            throw new IllegalStateException("Complete your profile before creating a listing");
+            throw new ProfileIncompleteException("Complete your profile before creating a listing");
         }
     }
 
     public void delete(ObjectId userId) {
 
         if (!userRepository.existsById(userId)) {
-            throw new IllegalArgumentException("User not found");
+            throw new ResourceNotFoundException("User not found");
         }
 
         userRepository.deleteById(userId);
     }
 
     private boolean hasText(String value) {
+
         return value != null && !value.isBlank();
     }
 }

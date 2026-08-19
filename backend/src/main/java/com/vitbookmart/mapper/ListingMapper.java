@@ -86,14 +86,7 @@ public class ListingMapper {
         }
     }
 
-    /*
-     * Lightweight response used for:
-     * - listing page
-     * - search results
-     * - sorting
-     *
-     * No seller information is loaded here.
-     */
+    //Lightweight Response
     public ListingResponse toResponse(Listing listing) {
 
         return new ListingResponse(
@@ -109,15 +102,8 @@ public class ListingMapper {
         );
     }
 
-    /*
-     * Detailed response used when the user opens one listing.
-     *
-     * Seller information is added only here.
-     */
-    public ListingDetailResponse toDetailResponse(
-            Listing listing,
-            SellerInfo sellerInfo
-    ) {
+    //Detailed Response
+    public ListingDetailResponse toDetailResponse(Listing listing, SellerInfo sellerInfo) {
 
         ListingDetailResponse response = new ListingDetailResponse();
 
@@ -134,14 +120,12 @@ public class ListingMapper {
         response.setUpdatedAt(listing.getUpdatedAt());
         response.setSeller(sellerInfo);
 
-        /*
-         * Only RENT listings expose unavailable exam slots.
-         */
+
+         //Only RENT listings expose unavailable exam slots.
+
         if (listing.getType() == ListingType.RENT) {
 
-            response.setUnavailableExamSlots(
-                    listing.getUnavailableExamSlots()
-            );
+            response.setUnavailableExamSlots(listing.getUnavailableExamSlots());
         }
 
         return response;

@@ -5,6 +5,8 @@ import com.vitbookmart.entity.Listing;
 import com.vitbookmart.entity.User;
 import com.vitbookmart.entity.enums.ListingStatus;
 import com.vitbookmart.entity.enums.UserStatus;
+import com.vitbookmart.exception.BadRequestException;
+import com.vitbookmart.exception.ResourceNotFoundException;
 import com.vitbookmart.repository.AdminRepository;
 import com.vitbookmart.repository.ListingRepository;
 import com.vitbookmart.repository.UserRepository;
@@ -27,7 +29,7 @@ public class AdminService {
     public Admin createAdmin(Admin admin) {
 
         if (adminRepository.existsByEmail(admin.getEmail())) {
-            throw new IllegalArgumentException("Admin already exists");
+            throw new BadRequestException("Admin already exists");
         }
 
         return adminRepository.save(admin);
@@ -36,13 +38,13 @@ public class AdminService {
     public Admin getById(ObjectId adminId) {
 
         return adminRepository.findById(adminId)
-                .orElseThrow(() -> new IllegalArgumentException("Admin not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
     }
 
     public Admin getByEmail(String email) {
 
         return adminRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Admin not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
     }
 
     public List<Admin> getAll() {
@@ -60,7 +62,7 @@ public class AdminService {
         if (email != null && !email.isBlank() && !email.equals(admin.getEmail())) {
 
             if (adminRepository.existsByEmail(email)) {
-                throw new IllegalArgumentException("Email already belongs to another admin");
+                throw new BadRequestException("Email already belongs to another admin");
             }
 
             admin.setEmail(email);
@@ -72,7 +74,7 @@ public class AdminService {
     public void deleteAdmin(ObjectId adminId) {
 
         if (!adminRepository.existsById(adminId)) {
-            throw new IllegalArgumentException("Admin not found");
+            throw new ResourceNotFoundException("Admin not found");
         }
 
         adminRepository.deleteById(adminId);
@@ -82,9 +84,9 @@ public class AdminService {
 
     public User getUser(ObjectId userId) {
 
-        return userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        return userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
-
+    
     public List<User> getAllUsers() {
 
         return userRepository.findAll();
@@ -120,7 +122,7 @@ public class AdminService {
     public void deleteUser(ObjectId userId) {
 
         if (!userRepository.existsById(userId)) {
-            throw new IllegalArgumentException("User not found");
+            throw new ResourceNotFoundException("User not found");
         }
 
         userRepository.deleteById(userId);
@@ -131,7 +133,7 @@ public class AdminService {
     public Listing getListing(ObjectId listingId) {
 
         return listingRepository.findById(listingId)
-                .orElseThrow(() -> new IllegalArgumentException("Listing not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Listing not found"));
     }
 
     public List<Listing> getAllListings() {
@@ -171,7 +173,7 @@ public class AdminService {
     public void deleteListing(ObjectId listingId) {
 
         if (!listingRepository.existsById(listingId)) {
-            throw new IllegalArgumentException("Listing not found");
+            throw new ResourceNotFoundException("Listing not found");
         }
 
         listingRepository.deleteById(listingId);
