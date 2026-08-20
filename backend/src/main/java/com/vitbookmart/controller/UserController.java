@@ -1,14 +1,16 @@
 package com.vitbookmart.controller;
 
 import com.vitbookmart.dto.request.UpdateUserProfileRequest;
+import com.vitbookmart.dto.response.ListingResponse;
 import com.vitbookmart.dto.response.UserResponse;
-import com.vitbookmart.entity.User;
+import com.vitbookmart.security.AuthenticatedUserService;
+import com.vitbookmart.service.ListingService;
 import com.vitbookmart.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,61 +21,34 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final AuthenticatedUserService authenticatedUserService;
+    private final ListingService listingService;
 
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> getMyProfile(Authentication authentication) {
 
-
-    @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user) {
-
-        User createdUser = userService.createUser(user);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
-    }
-
-    // GET USER BY ID
-
-    @GetMapping("/{userId}")
-    public ResponseEntity<UserResponse> getUserById(@PathVariable ObjectId userId) {
+        ObjectId userId = authenticatedUserService.getCurrentUserId(authentication);
 
         return ResponseEntity.ok(userService.getById(userId));
     }
 
+    @PutMapping("/me/update")
+    public ResponseEntity<UserResponse> updateMyProfile(Authentication authentication,
+            @Valid @RequestBody UpdateUserProfileRequest request
+    ) {
 
-
-    // GET USER BY EMAIL
-
-    @GetMapping("/email")
-    public ResponseEntity<UserResponse> getUserByEmail(@RequestParam String email) {
-        return ResponseEntity.ok(userService.getByEmail(email));
-    }
-
-
-
-    // GET ALL USERS
-
-    @GetMapping
-    public ResponseEntity<List<UserResponse>> getAllUsers() {
-
-        return ResponseEntity.ok(userService.getAll());
-    }
-
-    // UPDATE USER PROFILE
-
-    @PutMapping("/{userId}")
-    public ResponseEntity<UserResponse> updateProfile(@PathVariable ObjectId userId, @RequestBody @Valid UpdateUserProfileRequest request) {
+        ObjectId userId = authenticatedUserService.getCurrentUserId(authentication);
 
         return ResponseEntity.ok(userService.updateProfile(userId, request));
     }
 
 
+    // GET LISTINGS OF A SELLER
+    @GetMapping("/my/listings")
+    public ResponseEntity<List<ListingResponse>> getListingsBySeller(Authentication authentication) {
 
-    // DELETE USER
+        ObjectId sellerId=authenticatedUserService.getCurrentUserId(authentication);
 
-    @DeleteMapping("/{userId}")
-    public ResponseEntity<Void> deleteUser(@PathVariable ObjectId userId) {
-
-        userService.delete(userId);
-
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(listingService.getBySeller(sellerId));
     }
 }

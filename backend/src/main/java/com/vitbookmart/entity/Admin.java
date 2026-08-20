@@ -1,5 +1,6 @@
 package com.vitbookmart.entity;
 
+import com.vitbookmart.entity.enums.AdminRole;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,12 +21,13 @@ public class Admin {
     @Id
     private ObjectId id;
 
-    private String name;
+    private String username;
 
-    private String email;
+    private String password;
 
-    // Store BCrypt hashed password
-    private String passwordHash;
+    private AdminRole role;
+
+    private boolean active;
 
     @CreatedDate
     private LocalDateTime createdAt;

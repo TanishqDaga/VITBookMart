@@ -68,4 +68,10 @@ public class GlobalExceptionHandler {
 
         return buildResponse(HttpStatus.BAD_REQUEST, message, request);
     }
+
+    @ExceptionHandler(TerminatedUserException.class)
+    public ResponseEntity<ErrorResponse> handleTerminatedUser(TerminatedUserException ex, HttpServletRequest request) {
+
+        return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage(), request);
+    }
 }

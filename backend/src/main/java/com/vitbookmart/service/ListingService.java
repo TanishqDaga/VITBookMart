@@ -32,6 +32,7 @@ public class ListingService {
     private final UserService userService;
     private final ListingMapper listingMapper;
     private final ImageService imageService;
+    private final WishlistService wishlistService;
 
     private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
@@ -113,22 +114,6 @@ public class ListingService {
                 .toList();
     }
 
-    public List<ListingResponse> searchByTitle(String title) {
-
-        return listingRepository.findByTitleContainingIgnoreCase(title)
-                .stream()
-                .map(this::toListingResponse)
-                .toList();
-    }
-
-    public List<ListingResponse> searchBySubject(String subject) {
-
-        return listingRepository.findBySubjectContainingIgnoreCase(subject)
-                .stream()
-                .map(this::toListingResponse)
-                .toList();
-    }
-
     public ListingResponse updateListing(ObjectId listingId, ObjectId sellerId, UpdateListingRequest request) {
 
         Listing listing = getEntityById(listingId);
@@ -160,6 +145,8 @@ public class ListingService {
         validateOwnership(listing, sellerId);
 
         listingRepository.deleteById(listingId);
+
+        wishlistService.removeListingFromAllWishlists(listingId);
     }
 
     public Listing getEntityById(ObjectId listingId) {

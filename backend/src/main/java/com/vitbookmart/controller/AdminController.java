@@ -1,9 +1,11 @@
 package com.vitbookmart.controller;
 
+import com.vitbookmart.dto.request.CreateAdminRequest;
 import com.vitbookmart.entity.Admin;
 import com.vitbookmart.entity.Listing;
 import com.vitbookmart.entity.User;
 import com.vitbookmart.service.AdminService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.http.HttpStatus;
@@ -19,15 +21,16 @@ public class AdminController {
 
     private final AdminService adminService;
 
-
     // ADMIN MANAGEMENT
+    
 
     // Create admin
-    @PostMapping
-    public ResponseEntity<Admin> createAdmin(@RequestBody Admin admin) {
+    @PostMapping("/create")
+    public ResponseEntity<Admin> createAdmin(@RequestBody @Valid CreateAdminRequest request) {
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(adminService.createAdmin(admin));
+        return ResponseEntity.status(HttpStatus.CREATED).body(adminService.createAdmin(request));
     }
+
 
     // Get admin by ID
     @GetMapping("/{adminId}")
@@ -36,35 +39,33 @@ public class AdminController {
         return ResponseEntity.ok(adminService.getById(adminId));
     }
 
-    // Get admin by email
-    @GetMapping("/email")
-    public ResponseEntity<Admin> getAdminByEmail(@RequestParam String email) {
 
-        return ResponseEntity.ok(adminService.getByEmail(email));
+    // Get admin by username
+    @GetMapping("/username")
+    public ResponseEntity<Admin> getAdminByUsername(@RequestParam String username) {
+
+        return ResponseEntity.ok(adminService.getByUsername(username));
     }
 
+
     // Get all admins
-    @GetMapping
+    @GetMapping("/admins")
     public ResponseEntity<List<Admin>> getAllAdmins() {
 
         return ResponseEntity.ok(adminService.getAll());
     }
 
 
-    // Update admin profile
-    @PutMapping("/{adminId}")
-    public ResponseEntity<Admin> updateAdminProfile(
-            @PathVariable ObjectId adminId,
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) String email
-    ) {
+    // Update admin username
+    @PutMapping("/update/{adminId}")
+    public ResponseEntity<Admin> updateAdminProfile(@PathVariable ObjectId adminId, @RequestParam(required = false) String username) {
 
-        return ResponseEntity.ok(adminService.updateProfile(adminId, name, email));
+        return ResponseEntity.ok(adminService.updateProfile(adminId, username));
     }
 
 
     // Delete admin
-    @DeleteMapping("/{adminId}")
+    @DeleteMapping("/admins/{adminId}")
     public ResponseEntity<Void> deleteAdmin(@PathVariable ObjectId adminId) {
 
         adminService.deleteAdmin(adminId);
@@ -73,7 +74,9 @@ public class AdminController {
     }
 
 
+    
     // USER MANAGEMENT
+    
 
     // Get user
     @GetMapping("/users/{userId}")
@@ -90,15 +93,17 @@ public class AdminController {
         return ResponseEntity.ok(adminService.getAllUsers());
     }
 
+
     // Terminate user
-    @PatchMapping("/users/{userId}/terminate")
+    @PatchMapping("/users/terminate/{userId}")
     public ResponseEntity<User> terminateUser(@PathVariable ObjectId userId) {
 
         return ResponseEntity.ok(adminService.terminateUser(userId));
     }
 
+
     // Make user paid
-    @PatchMapping("/users/makePaid/{userId}")
+    @PatchMapping("/users/paid/{userId}")
     public ResponseEntity<User> makeUserPaid(@PathVariable ObjectId userId) {
 
         return ResponseEntity.ok(adminService.makeUserPaid(userId));
@@ -106,7 +111,7 @@ public class AdminController {
 
 
     // Make user free
-    @PatchMapping("/users/{userId}/free")
+    @PatchMapping("/users/free/{userId}")
     public ResponseEntity<User> makeUserFree(@PathVariable ObjectId userId) {
 
         return ResponseEntity.ok(adminService.makeUserFree(userId));
@@ -123,7 +128,9 @@ public class AdminController {
     }
 
 
+    
     // LISTING MANAGEMENT
+    
 
     // Get listing
     @GetMapping("/listings/{listingId}")
@@ -131,6 +138,7 @@ public class AdminController {
 
         return ResponseEntity.ok(adminService.getListing(listingId));
     }
+
 
     // Get all listings
     @GetMapping("/listings")

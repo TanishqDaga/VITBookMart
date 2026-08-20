@@ -1,10 +1,12 @@
 package com.vitbookmart.controller;
 
 import com.vitbookmart.dto.response.WishlistResponse;
+import com.vitbookmart.security.AuthenticatedUserService;
 import com.vitbookmart.service.WishlistService;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,12 +15,14 @@ import org.springframework.web.bind.annotation.*;
 public class WishlistController {
 
     private final WishlistService wishlistService;
-
+    private final AuthenticatedUserService authenticatedUserService;
 
     // GET WISHLIST
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<WishlistResponse> getWishlist(@PathVariable ObjectId userId) {
+    @GetMapping("/my")
+    public ResponseEntity<WishlistResponse> getWishlist(Authentication authentication) {
+
+        ObjectId userId=authenticatedUserService.getCurrentUserId(authentication);
 
         return ResponseEntity.ok(wishlistService.getWishlist(userId));
     }
@@ -26,26 +30,30 @@ public class WishlistController {
 
     // ADD LISTING TO WISHLIST
 
-    @PostMapping("add/{userId}/{listingId}")
-    public ResponseEntity<WishlistResponse> addToWishlist(@PathVariable ObjectId userId, @PathVariable ObjectId listingId) {
+    @PostMapping("/add/{listingId}")
+    public ResponseEntity<WishlistResponse> addToWishlist(Authentication authentication, @PathVariable ObjectId listingId) {
 
+        ObjectId userId=authenticatedUserService.getCurrentUserId(authentication);
         return ResponseEntity.ok(wishlistService.addToWishlist(userId, listingId));
     }
 
 
     // REMOVE LISTING FROM WISHLIST
 
-    @DeleteMapping("remove/{userId}/{listingId}")
-    public ResponseEntity<WishlistResponse> removeFromWishlist(@PathVariable ObjectId userId, @PathVariable ObjectId listingId) {
+    @DeleteMapping("remove/{listingId}")
+    public ResponseEntity<WishlistResponse> removeFromWishlist(Authentication authentication, @PathVariable ObjectId listingId) {
+
+        ObjectId userId=authenticatedUserService.getCurrentUserId(authentication);
 
         return ResponseEntity.ok(wishlistService.removeFromWishlist(userId, listingId));
     }
 
 
     // CHECK IF LISTING IS WISHLISTED
+    @GetMapping("isWishlisted/{listingId}")
+    public ResponseEntity<Boolean> isWishlisted(Authentication authentication, @PathVariable ObjectId listingId) {
 
-    @GetMapping("isWishlisted/{userId}/{listingId}")
-    public ResponseEntity<Boolean> isWishlisted(@PathVariable ObjectId userId, @PathVariable ObjectId listingId) {
+        ObjectId userId=authenticatedUserService.getCurrentUserId(authentication);
 
         return ResponseEntity.ok(wishlistService.isWishlisted(userId, listingId));
     }
@@ -53,8 +61,10 @@ public class WishlistController {
 
     // CLEAR WISHLIST
 
-    @DeleteMapping("/{userId}")
-    public ResponseEntity<WishlistResponse> clearWishlist(@PathVariable ObjectId userId) {
+    @DeleteMapping("/clear")
+    public ResponseEntity<WishlistResponse> clearWishlist(Authentication authentication) {
+
+        ObjectId userId=authenticatedUserService.getCurrentUserId(authentication);
 
         return ResponseEntity.ok(wishlistService.clearWishlist(userId));
     }

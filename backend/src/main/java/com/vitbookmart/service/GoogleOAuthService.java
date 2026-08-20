@@ -76,8 +76,6 @@ public class GoogleOAuthService {
 
         } catch (Exception e) {
 
-            e.printStackTrace();
-
             throw new IllegalStateException("Google authentication failed", e);
         }
     }

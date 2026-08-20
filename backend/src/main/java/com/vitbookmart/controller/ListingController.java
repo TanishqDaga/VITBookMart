@@ -6,6 +6,7 @@ import com.vitbookmart.dto.response.ListingDetailResponse;
 import com.vitbookmart.dto.response.ListingResponse;
 import com.vitbookmart.entity.enums.ListingCategory;
 import com.vitbookmart.entity.enums.ListingType;
+import com.vitbookmart.security.AuthenticatedUserService;
 import com.vitbookmart.service.ListingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.bson.types.ObjectId;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,15 +27,17 @@ import java.util.List;
 public class ListingController {
 
     private final ListingService listingService;
+    private final AuthenticatedUserService authenticatedUserService;
+
 
     // CREATE LISTING
-
-
-    @PostMapping(value = "/create/{sellerId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ListingResponse> createListing(
-            @PathVariable ObjectId sellerId,
+            Authentication authentication,
             @RequestPart("listing") @Valid CreateListingRequest request,
             @RequestPart("image") MultipartFile image) throws IOException {
+
+        ObjectId sellerId=authenticatedUserService.getCurrentUserId(authentication);
 
         ListingResponse response = listingService.createListing(sellerId, request, image);
 
@@ -52,7 +56,6 @@ public class ListingController {
 
 
     // GET LISTING BY ID
-
     @GetMapping("/{listingId}")
     public ResponseEntity<ListingDetailResponse> getListingById(@PathVariable ObjectId listingId) {
 
@@ -61,78 +64,50 @@ public class ListingController {
 
 
 
-    // GET LISTINGS OF A SELLER
-
-
-    @GetMapping("/my/{sellerId}")
-    public ResponseEntity<List<ListingResponse>> getListingsBySeller(@PathVariable ObjectId sellerId) {
-
-        return ResponseEntity.ok(listingService.getBySeller(sellerId));
-    }
-
-
-
-    // SEARCH BY TITLE
-
-    @GetMapping("/search/title")
-    public ResponseEntity<List<ListingResponse>> searchByTitle(@RequestParam String title) {
-
-        return ResponseEntity.ok(listingService.searchByTitle(title));
-    }
-
-
-
-    // SEARCH BY SUBJECT
-
-    @GetMapping("/search/subject")
-    public ResponseEntity<List<ListingResponse>> searchBySubject(
-            @RequestParam String subject
-    ) {
-
-        return ResponseEntity.ok(listingService.searchBySubject(subject));
-    }
-
-
-
     // UPDATE LISTING
-
-    @PutMapping("/update/{sellerId}/{listingId}")
+    @PutMapping("/update/{listingId}")
     public ResponseEntity<ListingResponse> updateListing(
-            @PathVariable ObjectId sellerId,
+            Authentication authentication,
             @PathVariable ObjectId listingId,
-            @RequestBody UpdateListingRequest request
+            @RequestBody @Valid UpdateListingRequest request
     ) {
+
+        ObjectId sellerId=authenticatedUserService.getCurrentUserId(authentication);
+
         return ResponseEntity.ok(listingService.updateListing(listingId, sellerId, request));
     }
 
 
-
     // MARK LISTING AS SOLD
 
-    @PatchMapping("markSold/{sellerId}/{listingId}")
-    public ResponseEntity<ListingResponse> markAsSold(@PathVariable ObjectId sellerId, @PathVariable ObjectId listingId) {
+    @PatchMapping("markSold/{listingId}")
+    public ResponseEntity<ListingResponse> markAsSold(Authentication authentication, @PathVariable ObjectId listingId) {
 
+        ObjectId sellerId=authenticatedUserService.getCurrentUserId(authentication);
         return ResponseEntity.ok(listingService.markAsSold(listingId, sellerId));
     }
 
 
-
     // DELETE LISTING
 
-    @DeleteMapping("/{listingId}/seller/{sellerId}")
-    public ResponseEntity<Void> deleteListing(@PathVariable ObjectId listingId, @PathVariable ObjectId sellerId) {
+    @DeleteMapping("delete/{listingId}")
+    public ResponseEntity<Void> deleteListing(Authentication authentication,@PathVariable ObjectId listingId) {
+
+        ObjectId sellerId=authenticatedUserService.getCurrentUserId(authentication);
 
         listingService.deleteListing(listingId, sellerId);
 
         return ResponseEntity.noContent().build();
     }
 
+    //GET LATEST LISTINGS
     @GetMapping("/latest")
     public ResponseEntity<List<ListingResponse>> getLatestListings() {
 
         return ResponseEntity.ok(listingService.getLatestListings());
     }
 
+    //SEARCH WITH FILTERS
     @GetMapping("/search")
     public ResponseEntity<List<ListingResponse>> searchListings(
 

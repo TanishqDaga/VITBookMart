@@ -11,7 +11,11 @@ import com.vitbookmart.repository.ListingRepository;
 import com.vitbookmart.repository.WishlistRepository;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +28,7 @@ public class WishlistService {
     private final ListingRepository listingRepository;
     private final ListingMapper listingMapper;
     private final WishlistMapper wishlistMapper;
+    private final MongoTemplate mongoTemplate;
 
     public WishlistResponse getWishlist(ObjectId userId) {
 
@@ -103,5 +108,14 @@ public class WishlistService {
                 .toList();
 
         return wishlistMapper.toResponse(wishlist, listingResponses);
+    }
+
+    public void removeListingFromAllWishlists(ObjectId listingId) {
+
+        Query query = new Query(Criteria.where("listingIds").is(listingId));
+
+        Update update = new Update().pull("listingIds", listingId);
+
+        mongoTemplate.updateMulti(query, update, Wishlist.class);
     }
 }

@@ -2,7 +2,7 @@ package com.vitbookmart.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 
-public record CreateAdminRequest(
+public record AdminLoginRequest(
 
         @NotBlank(message = "Username is required")
         String username,
