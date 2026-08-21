@@ -11,4 +11,6 @@ public interface WishlistRepository extends MongoRepository<Wishlist, ObjectId> 
     Optional<Wishlist> findByUserId(ObjectId userId);
 
     boolean existsByUserId(ObjectId userId);
+
+    void deleteByUserId(ObjectId userId);
 }

@@ -60,13 +60,6 @@ public class UserService {
         return userMapper.toResponse(getEntityByEmail(email));
     }
 
-    public List<UserResponse> getAll() {
-        return userRepository.findAll()
-                .stream()
-                .map(userMapper::toResponse)
-                .toList();
-    }
-
     public UserResponse updateProfile(ObjectId userId, UpdateUserProfileRequest request) {
 
         User user = getEntityById(userId);
@@ -94,15 +87,6 @@ public class UserService {
         if (!isProfileComplete(user)) {
             throw new ProfileIncompleteException("Complete your profile before creating a listing");
         }
-    }
-
-    public void delete(ObjectId userId) {
-
-        if (!userRepository.existsById(userId)) {
-            throw new ResourceNotFoundException("User not found");
-        }
-
-        userRepository.deleteById(userId);
     }
 
     private boolean hasText(String value) {

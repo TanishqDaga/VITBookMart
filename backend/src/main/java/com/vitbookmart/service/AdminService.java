@@ -7,9 +7,11 @@ import com.vitbookmart.entity.User;
 import com.vitbookmart.entity.enums.AdminRole;
 import com.vitbookmart.entity.enums.ListingStatus;
 import com.vitbookmart.entity.enums.UserStatus;
+import com.vitbookmart.exception.ResourceNotFoundException;
 import com.vitbookmart.repository.AdminRepository;
 import com.vitbookmart.repository.ListingRepository;
 import com.vitbookmart.repository.UserRepository;
+import com.vitbookmart.repository.WishlistRepository;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,11 +28,11 @@ public class AdminService {
     private final ListingRepository listingRepository;
     private final WishlistService wishlistService;
     private final PasswordEncoder passwordEncoder;
+    private final WishlistRepository wishlistRepository;
 
 
     
     // ADMIN MANAGEMENT
-
 
     public Admin createAdmin(CreateAdminRequest request) {
 
@@ -141,10 +143,29 @@ public class AdminService {
 
     public void deleteUser(ObjectId userId) {
 
+        // Check user exists
         if (!userRepository.existsById(userId)) {
-            throw new IllegalArgumentException("User not found");
+            throw new ResourceNotFoundException("User not found");
         }
 
+        // Find all listings created by this user
+        List<Listing> userListings = listingRepository.findBySellerId(userId);
+
+        // Remove those listings from all wishlists
+        for (Listing listing : userListings) {
+
+            wishlistService.removeListingFromAllWishlists(listing.getId());
+        }
+
+        // Delete all listings created by the user
+        if (!userListings.isEmpty()) {
+            listingRepository.deleteAll(userListings);
+        }
+
+        // Delete the user's wishlist
+        wishlistRepository.deleteByUserId(userId);
+
+        // Finally delete the user
         userRepository.deleteById(userId);
     }
 
@@ -195,8 +216,6 @@ public class AdminService {
 
 
     public void deleteListing(ObjectId listingId) {
-
-        Listing listing = getListing(listingId);
 
         listingRepository.deleteById(listingId);
 
