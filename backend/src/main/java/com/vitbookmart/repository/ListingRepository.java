@@ -13,15 +13,6 @@ public interface ListingRepository extends MongoRepository<Listing, ObjectId>,Li
 
     List<Listing> findByStatus(ListingStatus status);
 
-    List<Listing> findBySubjectContainingIgnoreCase(String subject);
-
-    List<Listing> findByTitleContainingIgnoreCase(String title);
-
     List<Listing> findByStatusOrderByCreatedAtDesc(ListingStatus status);
 
-    List<Listing> findAllByOrderByCreatedAtDesc();
-
-    List<Listing> findAllByOrderByPriceAsc();
-
-    List<Listing> findAllByOrderByPriceDesc();
 }

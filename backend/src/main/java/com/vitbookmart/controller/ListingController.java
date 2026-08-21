@@ -44,15 +44,12 @@ public class ListingController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-
-
     // GET ALL LISTINGS
     @GetMapping
-    public ResponseEntity<List<ListingResponse>> getAllListings() {
+    public ResponseEntity<List<ListingResponse>> getAllAvailableListings() {
 
         return ResponseEntity.ok(listingService.getAllAvailableListings());
     }
-
 
 
     // GET LISTING BY ID
@@ -61,8 +58,6 @@ public class ListingController {
 
         return ResponseEntity.ok(listingService.getById(listingId));
     }
-
-
 
     // UPDATE LISTING
     @PutMapping("/update/{listingId}")
@@ -85,19 +80,6 @@ public class ListingController {
 
         ObjectId sellerId=authenticatedUserService.getCurrentUserId(authentication);
         return ResponseEntity.ok(listingService.markAsSold(listingId, sellerId));
-    }
-
-
-    // DELETE LISTING
-
-    @DeleteMapping("delete/{listingId}")
-    public ResponseEntity<Void> deleteListing(Authentication authentication,@PathVariable ObjectId listingId) {
-
-        ObjectId sellerId=authenticatedUserService.getCurrentUserId(authentication);
-
-        listingService.deleteListing(listingId, sellerId);
-
-        return ResponseEntity.noContent().build();
     }
 
     //GET LATEST LISTINGS
