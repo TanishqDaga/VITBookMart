@@ -1,5 +1,6 @@
 package com.vitbookmart.controller;
 
+import com.vitbookmart.dto.response.WishlistActionResponse;
 import com.vitbookmart.dto.response.WishlistResponse;
 import com.vitbookmart.security.AuthenticatedUserService;
 import com.vitbookmart.service.WishlistService;
@@ -31,21 +32,26 @@ public class WishlistController {
     // ADD LISTING TO WISHLIST
 
     @PostMapping("/add/{listingId}")
-    public ResponseEntity<WishlistResponse> addToWishlist(Authentication authentication, @PathVariable ObjectId listingId) {
+    public ResponseEntity<Void> addToWishlist(Authentication authentication, @PathVariable ObjectId listingId) {
 
-        ObjectId userId=authenticatedUserService.getCurrentUserId(authentication);
-        return ResponseEntity.ok(wishlistService.addToWishlist(userId, listingId));
+        ObjectId userId = authenticatedUserService.getCurrentUserId(authentication);
+
+        wishlistService.addToWishlist(userId, listingId);
+
+        return ResponseEntity.noContent().build();
     }
 
 
     // REMOVE LISTING FROM WISHLIST
 
-    @DeleteMapping("remove/{listingId}")
-    public ResponseEntity<WishlistResponse> removeFromWishlist(Authentication authentication, @PathVariable ObjectId listingId) {
+    @DeleteMapping("/remove/{listingId}")
+    public ResponseEntity<Void> removeFromWishlist(Authentication authentication, @PathVariable ObjectId listingId) {
 
-        ObjectId userId=authenticatedUserService.getCurrentUserId(authentication);
+        ObjectId userId = authenticatedUserService.getCurrentUserId(authentication);
 
-        return ResponseEntity.ok(wishlistService.removeFromWishlist(userId, listingId));
+        wishlistService.removeFromWishlist(userId, listingId);
+
+        return ResponseEntity.noContent().build();
     }
 
 

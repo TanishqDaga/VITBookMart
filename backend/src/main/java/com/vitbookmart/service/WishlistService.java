@@ -37,7 +37,7 @@ public class WishlistService {
         return toResponse(wishlist);
     }
 
-    public WishlistResponse addToWishlist(ObjectId userId, ObjectId listingId) {
+    public void addToWishlist(ObjectId userId, ObjectId listingId) {
 
         if (!listingRepository.existsById(listingId)) {
             throw new ResourceNotFoundException("Listing not found");
@@ -47,21 +47,17 @@ public class WishlistService {
 
         if (!wishlist.getListingIds().contains(listingId)) {
             wishlist.getListingIds().add(listingId);
-            wishlist = wishlistRepository.save(wishlist);
+            wishlistRepository.save(wishlist);
         }
-
-        return toResponse(wishlist);
     }
 
-    public WishlistResponse removeFromWishlist(ObjectId userId, ObjectId listingId) {
+    public void removeFromWishlist(ObjectId userId, ObjectId listingId) {
 
-        Wishlist wishlist = getEntityByUserId(userId);
+        Wishlist wishlist = wishlistRepository.findByUserId(userId).orElseThrow(() -> new ResourceNotFoundException("Wishlist not found"));
 
-        wishlist.getListingIds().remove(listingId);
-
-        wishlist = wishlistRepository.save(wishlist);
-
-        return toResponse(wishlist);
+        if (wishlist.getListingIds().remove(listingId)) {
+            wishlistRepository.save(wishlist);
+        }
     }
 
     public boolean isWishlisted(ObjectId userId, ObjectId listingId) {

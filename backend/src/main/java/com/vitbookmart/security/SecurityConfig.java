@@ -56,7 +56,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/listings/search",
                                 "/api/listings/latest",
-                                "/api/listings"
+                                "/api/listings",
+                                "/api/listings/{listingId}"
                         ).permitAll()
 
                         .requestMatchers(

@@ -17,6 +17,7 @@ import com.vitbookmart.repository.ListingRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,11 +29,21 @@ import java.util.List;
 @Slf4j
 public class ListingService {
 
+    @Value("${vitbookmart.cache.listing.ttl-hours}")
+    private long listingCacheTtlHours;
+
+    @Value("${vitbookmart.cache.latest.ttl-hours}")
+    private long latestCacheTtlHours;
+
+    @Value("${vitbookmart.cache.search.ttl-hours}")
+    private long searchCacheTtlHours;
+
     private final ListingRepository listingRepository;
     private final UserService userService;
     private final ListingMapper listingMapper;
     private final ImageService imageService;
     private final WishlistService wishlistService;
+    private final ListingCacheService listingCacheService;
 
     private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
@@ -76,18 +87,42 @@ public class ListingService {
 
         listing.setStatus(ListingStatus.AVAILABLE);
 
-        return toListingResponse(listingRepository.save(listing));
+        Listing savedListing = listingRepository.save(listing);
+
+        listingCacheService.evictLatestListings();
+        listingCacheService.invalidateSearchCaches();
+
+        return toListingResponse(savedListing);
     }
 
     public ListingDetailResponse getById(ObjectId listingId) {
 
+        String cacheKey = listingId.toHexString();
+
+        // 1. Check Redis first
+        ListingDetailResponse cached = listingCacheService.getListing(cacheKey);
+
+        if (cached != null) {
+            log.info("Listing cache HIT: {}", listingId);
+            return cached;
+        }
+
+        log.info("Listing cache MISS: {}", listingId);
+
+        // 2. Redis miss → MongoDB
         Listing listing = getEntityById(listingId);
 
         User seller = userService.getEntityById(listing.getSellerId());
 
         SellerInfo sellerInfo = new SellerInfo(seller.getName(), seller.getHostel());
 
-        return listingMapper.toDetailResponse(listing, sellerInfo);
+        ListingDetailResponse response = listingMapper.toDetailResponse(listing, sellerInfo);
+
+        // 3. Store result in Redis
+        listingCacheService.cacheListing(cacheKey, response, listingCacheTtlHours);
+
+        // 4. Return response
+        return response;
     }
 
     public List<ListingResponse> getAll() {
@@ -124,7 +159,11 @@ public class ListingService {
 
         validateListing(listing);
 
-        return toListingResponse(listingRepository.save(listing));
+        Listing savedListing = listingRepository.save(listing);
+
+        listingCacheService.invalidateListingCaches(listingId.toHexString());
+
+        return toListingResponse(savedListing);
     }
 
     public ListingResponse markAsSold(ObjectId listingId, ObjectId sellerId) {
@@ -135,7 +174,11 @@ public class ListingService {
 
         listing.setStatus(ListingStatus.SOLD);
 
-        return toListingResponse(listingRepository.save(listing));
+        Listing savedListing = listingRepository.save(listing);
+
+        listingCacheService.invalidateListingCaches(listingId.toHexString());
+
+        return toListingResponse(savedListing);
     }
 
     public void deleteListing(ObjectId listingId, ObjectId sellerId) {
@@ -147,6 +190,8 @@ public class ListingService {
         listingRepository.deleteById(listingId);
 
         wishlistService.removeListingFromAllWishlists(listingId);
+
+        listingCacheService.invalidateListingCaches(listingId.toHexString());
     }
 
     public Listing getEntityById(ObjectId listingId) {
@@ -204,20 +249,65 @@ public class ListingService {
     }
     public List<ListingResponse> getLatestListings() {
 
-        return listingRepository
-                .findByStatusOrderByCreatedAtDesc(ListingStatus.AVAILABLE)
-                .stream()
-                .map(this::toListingResponse)
-                .toList();
+        // 1. Redis
+        List<ListingResponse> cached = listingCacheService.getLatestListings();
+
+        if (cached != null) {
+            log.info("Latest listings cache HIT");
+            return cached;
+        }
+
+        log.info("Latest listings cache MISS");
+
+        // 2. MongoDB
+        List<ListingResponse> listings = listingRepository
+                        .findByStatusOrderByCreatedAtDesc(ListingStatus.AVAILABLE)
+                        .stream()
+                        .map(this::toListingResponse)
+                        .toList();
+
+        // 3. Redis
+        listingCacheService.cacheLatestListings(listings, latestCacheTtlHours);
+
+        return listings;
     }
 
-    public List<ListingResponse> searchListings(String query, ListingType type, ListingCategory category, String sort) {
+    public List<ListingResponse> searchListings(
+            String query,
+            ListingType type,
+            ListingCategory category,
+            String sort) {
 
-        return listingRepository
-                .search(query, type, category, sort)
-                .stream()
-                .map(this::toListingResponse)
-                .toList();
+        // 1. Build unique cache key
+        String cacheKey = listingCacheService.buildSearchKey(
+                query,
+                type != null ? type.name() : null,
+                category != null ? category.name() : null,
+                sort
+        );
+
+        // 2. Redis
+        List<ListingResponse> cached = listingCacheService.getSearchResults(cacheKey);
+
+        if (cached != null) {
+            log.info("Search cache HIT: {}", cacheKey);
+            return cached;
+        }
+
+        log.info("Search cache MISS: {}", cacheKey);
+
+        // 3. MongoDB
+        List<ListingResponse> listings =
+                listingRepository
+                        .search(query, type, category, sort)
+                        .stream()
+                        .map(this::toListingResponse)
+                        .toList();
+
+        // 4. Redis
+        listingCacheService.cacheSearchResults(cacheKey, listings, searchCacheTtlHours);
+
+        return listings;
     }
 
 }

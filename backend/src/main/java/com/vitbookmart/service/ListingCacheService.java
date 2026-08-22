@@ -1,0 +1,295 @@
+package com.vitbookmart.service;
+
+import com.vitbookmart.dto.response.ListingDetailResponse;
+import com.vitbookmart.dto.response.ListingResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Service;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.time.Duration;
+import java.util.List;
+
+@Slf4j
+@Service
+public class ListingCacheService {
+
+    private static final String LISTING_KEY_PREFIX = "listing:";
+    private static final String LATEST_KEY = "listings:latest";
+
+    private static final String SEARCH_KEY_PREFIX = "listings:search:";
+    private static final String SEARCH_VERSION_KEY = "listings:search:version";
+
+    private final RedisTemplate<String, String> redisTemplate;
+    private final ObjectMapper objectMapper;
+
+    public ListingCacheService(RedisTemplate<String, String> redisTemplate, ObjectMapper objectMapper) {
+
+        this.redisTemplate = redisTemplate;
+        this.objectMapper = objectMapper;
+    }
+
+    
+    // Individual Listing
+
+    public ListingDetailResponse getListing(String listingId) {
+
+        String key = LISTING_KEY_PREFIX + listingId;
+
+        String cachedValue = redisTemplate.opsForValue().get(key);
+
+        if (cachedValue == null) {
+            return null;
+        }
+
+        try {
+            return objectMapper.readValue(cachedValue, ListingDetailResponse.class);
+
+        } catch (Exception e) {
+
+            log.warn("Invalid listing cache found. Deleting key: {}", key);
+
+            redisTemplate.delete(key);
+
+            return null;
+        }
+    }
+
+    public void cacheListing(String listingId, ListingDetailResponse response, long ttlHours) {
+
+        String key = LISTING_KEY_PREFIX + listingId;
+
+        try {
+
+            String json = objectMapper.writeValueAsString(response);
+
+            redisTemplate.opsForValue().set(key, json, Duration.ofHours(ttlHours));
+
+        } catch (Exception e) {
+
+            log.error("Failed to cache listing: {}", listingId, e);
+
+            // Redis is only a cache.
+            // Do not break the API if caching fails.
+        }
+    }
+
+    
+    // Latest Listings
+
+    public List<ListingResponse> getLatestListings() {
+
+        String cachedValue = redisTemplate.opsForValue().get(LATEST_KEY);
+
+        if (cachedValue == null) {
+            return null;
+        }
+
+        try {
+
+            return objectMapper.readValue(cachedValue, new TypeReference<List<ListingResponse>>() {});
+
+        } catch (Exception e) {
+
+            log.warn("Invalid latest listings cache. Deleting key.");
+
+            redisTemplate.delete(LATEST_KEY);
+
+            return null;
+        }
+    }
+
+    public void cacheLatestListings(List<ListingResponse> listings, long ttlHours) {
+
+        try {
+
+            String json = objectMapper.writeValueAsString(listings);
+
+            redisTemplate.opsForValue().set(LATEST_KEY, json, Duration.ofHours(ttlHours));
+
+        } catch (Exception e) {
+
+            log.error("Failed to cache latest listings", e);
+
+            // Do not break API because Redis failed.
+        }
+    }
+
+    public void evictLatestListings() {
+
+        Boolean deleted = redisTemplate.delete(LATEST_KEY);
+
+        if (Boolean.TRUE.equals(deleted)) {
+
+            log.info("Deleted latest listings cache");
+        }
+    }
+
+
+    
+    // Search Listings
+    
+
+    public List<ListingResponse> getSearchResults(String cacheKey) {
+
+        String cachedValue = redisTemplate.opsForValue().get(cacheKey);
+
+        if (cachedValue == null) {
+            return null;
+        }
+
+        try {
+
+            return objectMapper.readValue(cachedValue, new TypeReference<List<ListingResponse>>() {});
+
+        } catch (Exception e) {
+
+            log.warn("Invalid search cache. Deleting key: {}", cacheKey);
+
+            redisTemplate.delete(cacheKey);
+
+            return null;
+        }
+    }
+
+    public void cacheSearchResults(String cacheKey, List<ListingResponse> listings, long ttlHours) {
+
+        try {
+
+            String json = objectMapper.writeValueAsString(listings);
+
+            redisTemplate.opsForValue().set(cacheKey, json, Duration.ofHours(ttlHours));
+
+        } catch (Exception e) {
+
+            log.error("Failed to cache search results: {}", cacheKey, e);
+
+            // Do not break API because Redis failed.
+        }
+    }
+
+
+    
+    // Search Cache Key
+    
+
+    public String buildSearchKey(String query, String type, String category, String sort) {
+
+        String normalizedQuery = normalize(query);
+        String normalizedType = normalize(type);
+        String normalizedCategory = normalize(category);
+        String normalizedSort = normalize(sort);
+
+        String searchParameters =
+                normalizedQuery
+                        + "|"
+                        + normalizedType
+                        + "|"
+                        + normalizedCategory
+                        + "|"
+                        + normalizedSort;
+
+        String hash = sha256(searchParameters);
+
+        String version = getSearchVersion();
+
+        return SEARCH_KEY_PREFIX
+                + version
+                + ":"
+                + hash;
+    }
+
+    private String normalize(String value) {
+
+        if (value == null || value.isBlank()) {
+            return "null";
+        }
+
+        return value.trim().toLowerCase();
+    }
+
+    private String sha256(String value) {
+
+        try {
+
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+
+            byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
+
+            StringBuilder hex = new StringBuilder();
+
+            for (byte b : hash) {
+
+                hex.append(String.format("%02x", b));
+            }
+
+            return hex.toString();
+
+        } catch (Exception e) {
+
+            throw new IllegalStateException("Unable to generate search cache key", e);
+        }
+    }
+
+
+    
+    // Search Cache Version
+    
+
+    private String getSearchVersion() {
+
+        String version = redisTemplate.opsForValue().get(SEARCH_VERSION_KEY);
+
+        if (version == null) {
+
+            Boolean created = redisTemplate.opsForValue().setIfAbsent(SEARCH_VERSION_KEY, "1");
+
+            if (Boolean.TRUE.equals(created)) {
+                return "1";
+            }
+
+            version = redisTemplate.opsForValue().get(SEARCH_VERSION_KEY);
+        }
+
+        return version;
+    }
+
+    public void invalidateSearchCaches() {
+
+        Long newVersion = redisTemplate.opsForValue().increment(SEARCH_VERSION_KEY);
+
+        log.info("Search cache invalidated. New version: {}", newVersion);
+    }
+
+
+    
+    // Complete Listing Cache Invalidation
+    
+
+    public void invalidateListingCaches(String listingId) {
+
+        // Individual listing
+        evictListing(listingId);
+
+        // Latest listings
+        evictLatestListings();
+
+        // All search results become logically invalid
+        invalidateSearchCaches();
+    }
+
+    public void evictListing(String listingId) {
+
+        String key = LISTING_KEY_PREFIX + listingId;
+
+        Boolean deleted = redisTemplate.delete(key);
+
+        if (Boolean.TRUE.equals(deleted)) {
+
+            log.info("Deleted listing cache: {}", key);
+        }
+    }
+}
