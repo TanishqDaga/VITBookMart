@@ -2,6 +2,7 @@ package com.vitbookmart.service;
 
 import com.vitbookmart.dto.response.ListingDetailResponse;
 import com.vitbookmart.dto.response.ListingResponse;
+import com.vitbookmart.dto.response.PaginatedResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -11,14 +12,15 @@ import tools.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Duration;
-import java.util.List;
 
 @Slf4j
 @Service
 public class ListingCacheService {
 
     private static final String LISTING_KEY_PREFIX = "listing:";
-    private static final String LATEST_KEY = "listings:latest";
+
+    private static final String LATEST_KEY_PREFIX = "listings:latest:";
+    private static final String LATEST_VERSION_KEY = "listings:latest:version";
 
     private static final String SEARCH_KEY_PREFIX = "listings:search:";
     private static final String SEARCH_VERSION_KEY = "listings:search:version";
@@ -26,13 +28,15 @@ public class ListingCacheService {
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
 
-    public ListingCacheService(RedisTemplate<String, String> redisTemplate, ObjectMapper objectMapper) {
+    public ListingCacheService(
+            RedisTemplate<String, String> redisTemplate,
+            ObjectMapper objectMapper) {
 
         this.redisTemplate = redisTemplate;
         this.objectMapper = objectMapper;
     }
 
-    
+
     // Individual Listing
 
     public ListingDetailResponse getListing(String listingId) {
@@ -48,7 +52,8 @@ public class ListingCacheService {
         try {
             return objectMapper.readValue(cachedValue, ListingDetailResponse.class);
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
 
             log.warn("Invalid listing cache found. Deleting key: {}", key);
 
@@ -71,18 +76,17 @@ public class ListingCacheService {
         } catch (Exception e) {
 
             log.error("Failed to cache listing: {}", listingId, e);
-
-            // Redis is only a cache.
-            // Do not break the API if caching fails.
         }
     }
 
     
     // Latest Listings
 
-    public List<ListingResponse> getLatestListings() {
+    public PaginatedResponse<ListingResponse> getLatestListings(int page, int size) {
 
-        String cachedValue = redisTemplate.opsForValue().get(LATEST_KEY);
+        String key = buildLatestKey(page, size);
+
+        String cachedValue = redisTemplate.opsForValue().get(key);
 
         if (cachedValue == null) {
             return null;
@@ -90,42 +94,72 @@ public class ListingCacheService {
 
         try {
 
-            return objectMapper.readValue(cachedValue, new TypeReference<List<ListingResponse>>() {});
+            return objectMapper.readValue(cachedValue, new TypeReference<PaginatedResponse<ListingResponse>>() {});
 
         } catch (Exception e) {
 
-            log.warn("Invalid latest listings cache. Deleting key.");
+            log.warn("Invalid latest listings cache. Deleting key: {}", key);
 
-            redisTemplate.delete(LATEST_KEY);
+            redisTemplate.delete(key);
 
             return null;
         }
     }
 
-    public void cacheLatestListings(List<ListingResponse> listings, long ttlHours) {
+    public void cacheLatestListings(PaginatedResponse<ListingResponse> response, long ttlHours) {
+
+        int page = response.getPage();
+        int size = response.getSize();
+
+        String key = buildLatestKey(page, size);
 
         try {
 
-            String json = objectMapper.writeValueAsString(listings);
+            String json = objectMapper.writeValueAsString(response);
 
-            redisTemplate.opsForValue().set(LATEST_KEY, json, Duration.ofHours(ttlHours));
+            redisTemplate.opsForValue().set(key, json, Duration.ofHours(ttlHours));
 
         } catch (Exception e) {
 
-            log.error("Failed to cache latest listings", e);
-
-            // Do not break API because Redis failed.
+            log.error("Failed to cache latest listings: {}", key, e);
         }
+    }
+
+    private String buildLatestKey(int page, int size) {
+
+        String version = getLatestVersion();
+
+        return LATEST_KEY_PREFIX
+                + version
+                + ":"
+                + page
+                + ":"
+                + size;
+    }
+
+    private String getLatestVersion() {
+
+        String version = redisTemplate.opsForValue().get(LATEST_VERSION_KEY);
+
+        if (version == null) {
+
+            Boolean created = redisTemplate.opsForValue().setIfAbsent(LATEST_VERSION_KEY, "1");
+
+            if (Boolean.TRUE.equals(created)) {
+                return "1";
+            }
+
+            version = redisTemplate.opsForValue().get(LATEST_VERSION_KEY);
+        }
+
+        return version;
     }
 
     public void evictLatestListings() {
 
-        Boolean deleted = redisTemplate.delete(LATEST_KEY);
+        Long newVersion = redisTemplate.opsForValue().increment(LATEST_VERSION_KEY);
 
-        if (Boolean.TRUE.equals(deleted)) {
-
-            log.info("Deleted latest listings cache");
-        }
+        log.info("Latest listings cache invalidated. New version: {}", newVersion);
     }
 
 
@@ -133,7 +167,7 @@ public class ListingCacheService {
     // Search Listings
     
 
-    public List<ListingResponse> getSearchResults(String cacheKey) {
+    public PaginatedResponse<ListingResponse> getSearchResults(String cacheKey) {
 
         String cachedValue = redisTemplate.opsForValue().get(cacheKey);
 
@@ -143,7 +177,7 @@ public class ListingCacheService {
 
         try {
 
-            return objectMapper.readValue(cachedValue, new TypeReference<List<ListingResponse>>() {});
+            return objectMapper.readValue(cachedValue, new TypeReference<PaginatedResponse<ListingResponse>>() {});
 
         } catch (Exception e) {
 
@@ -155,19 +189,20 @@ public class ListingCacheService {
         }
     }
 
-    public void cacheSearchResults(String cacheKey, List<ListingResponse> listings, long ttlHours) {
+    public void cacheSearchResults(
+            String cacheKey,
+            PaginatedResponse<ListingResponse> response,
+            long ttlHours) {
 
         try {
 
-            String json = objectMapper.writeValueAsString(listings);
+            String json = objectMapper.writeValueAsString(response);
 
             redisTemplate.opsForValue().set(cacheKey, json, Duration.ofHours(ttlHours));
 
         } catch (Exception e) {
 
             log.error("Failed to cache search results: {}", cacheKey, e);
-
-            // Do not break API because Redis failed.
         }
     }
 
@@ -176,7 +211,13 @@ public class ListingCacheService {
     // Search Cache Key
     
 
-    public String buildSearchKey(String query, String type, String category, String sort) {
+    public String buildSearchKey(
+            String query,
+            String type,
+            String category,
+            String sort,
+            int page,
+            int size) {
 
         String normalizedQuery = normalize(query);
         String normalizedType = normalize(type);
@@ -190,7 +231,11 @@ public class ListingCacheService {
                         + "|"
                         + normalizedCategory
                         + "|"
-                        + normalizedSort;
+                        + normalizedSort
+                        + "|"
+                        + page
+                        + "|"
+                        + size;
 
         String hash = sha256(searchParameters);
 
@@ -277,7 +322,7 @@ public class ListingCacheService {
         // Latest listings
         evictLatestListings();
 
-        // All search results become logically invalid
+        // Search listings
         invalidateSearchCaches();
     }
 

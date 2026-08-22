@@ -4,6 +4,7 @@ import com.vitbookmart.dto.request.CreateListingRequest;
 import com.vitbookmart.dto.request.UpdateListingRequest;
 import com.vitbookmart.dto.response.ListingDetailResponse;
 import com.vitbookmart.dto.response.ListingResponse;
+import com.vitbookmart.dto.response.PaginatedResponse;
 import com.vitbookmart.entity.enums.ListingCategory;
 import com.vitbookmart.entity.enums.ListingType;
 import com.vitbookmart.security.AuthenticatedUserService;
@@ -11,6 +12,9 @@ import com.vitbookmart.service.ListingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -84,14 +88,16 @@ public class ListingController {
 
     //GET LATEST LISTINGS
     @GetMapping("/latest")
-    public ResponseEntity<List<ListingResponse>> getLatestListings() {
-
-        return ResponseEntity.ok(listingService.getLatestListings());
+    public ResponseEntity<PaginatedResponse<ListingResponse>> getLatestListings(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
+            Pageable pageable
+    ) {
+        return ResponseEntity.ok(listingService.getLatestListings(pageable));
     }
 
     //SEARCH WITH FILTERS
     @GetMapping("/search")
-    public ResponseEntity<List<ListingResponse>> searchListings(
+    public ResponseEntity<PaginatedResponse<ListingResponse>> searchListings(
 
             @RequestParam(required = false)
             String query,
@@ -103,9 +109,12 @@ public class ListingController {
             ListingCategory category,
 
             @RequestParam(required = false, defaultValue = "latest")
-            String sort
+            String sort,
+
+            @PageableDefault(size = 20)
+            Pageable pageable
     ) {
 
-        return ResponseEntity.ok(listingService.searchListings(query, type, category, sort));
+        return ResponseEntity.ok(listingService.searchListings(query, type, category, sort, pageable));
     }
 }

@@ -4,6 +4,7 @@ import com.vitbookmart.dto.request.CreateListingRequest;
 import com.vitbookmart.dto.request.UpdateListingRequest;
 import com.vitbookmart.dto.response.ListingDetailResponse;
 import com.vitbookmart.dto.response.ListingResponse;
+import com.vitbookmart.dto.response.PaginatedResponse;
 import com.vitbookmart.dto.response.SellerInfo;
 import com.vitbookmart.entity.Listing;
 import com.vitbookmart.entity.User;
@@ -18,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -247,67 +250,104 @@ public class ListingService {
             throw new BadRequestException("You are not the owner of this listing");
         }
     }
-    public List<ListingResponse> getLatestListings() {
+    public PaginatedResponse<ListingResponse> getLatestListings(Pageable pageable) {
 
-        // 1. Redis
-        List<ListingResponse> cached = listingCacheService.getLatestListings();
+        int page = pageable.getPageNumber();
+        int size = pageable.getPageSize();
+
+        // Redis
+        PaginatedResponse<ListingResponse> cached =
+                listingCacheService.getLatestListings(page, size);
 
         if (cached != null) {
-            log.info("Latest listings cache HIT");
+
+            log.info("Latest listings cache HIT: page={}, size={}", page, size);
+
             return cached;
         }
 
-        log.info("Latest listings cache MISS");
+        log.info("Latest listings cache MISS: page={}, size={}", page, size);
 
-        // 2. MongoDB
-        List<ListingResponse> listings = listingRepository
-                        .findByStatusOrderByCreatedAtDesc(ListingStatus.AVAILABLE)
+        // MongoDB
+        Page<Listing> listingPage = listingRepository.findByStatusOrderByCreatedAtDesc(ListingStatus.AVAILABLE, pageable);
+
+        List<ListingResponse> listings =
+                listingPage.getContent()
                         .stream()
                         .map(this::toListingResponse)
                         .toList();
 
-        // 3. Redis
-        listingCacheService.cacheLatestListings(listings, latestCacheTtlHours);
+        PaginatedResponse<ListingResponse> response =
+                new PaginatedResponse<>(
+                        listings,
+                        listingPage.getNumber(),
+                        listingPage.getSize(),
+                        listingPage.getTotalElements(),
+                        listingPage.getTotalPages(),
+                        listingPage.isFirst(),
+                        listingPage.isLast()
+                );
 
-        return listings;
+        // Redis
+        listingCacheService.cacheLatestListings(response, latestCacheTtlHours);
+
+        return response;
     }
-
-    public List<ListingResponse> searchListings(
+    public PaginatedResponse<ListingResponse> searchListings(
             String query,
             ListingType type,
             ListingCategory category,
-            String sort) {
+            String sort,
+            Pageable pageable) {
 
-        // 1. Build unique cache key
+        int page = pageable.getPageNumber();
+        int size = pageable.getPageSize();
+
+        // Build pagination-aware cache key
         String cacheKey = listingCacheService.buildSearchKey(
-                query,
-                type != null ? type.name() : null,
-                category != null ? category.name() : null,
-                sort
-        );
+                        query,
+                        type != null ? type.name() : null,
+                        category != null ? category.name() : null,
+                        sort,
+                        page,
+                        size
+                );
 
-        // 2. Redis
-        List<ListingResponse> cached = listingCacheService.getSearchResults(cacheKey);
+        // Redis
+        PaginatedResponse<ListingResponse> cached = listingCacheService.getSearchResults(cacheKey);
 
         if (cached != null) {
-            log.info("Search cache HIT: {}", cacheKey);
+
+            log.info("Search cache HIT: page={}, size={}, key={}", page, size, cacheKey);
+
             return cached;
         }
 
-        log.info("Search cache MISS: {}", cacheKey);
+        log.info("Search cache MISS: page={}, size={}, key={}", page, size, cacheKey);
 
-        // 3. MongoDB
+        // MongoDB
+        Page<Listing> listingPage = listingRepository.search(query, type, category, sort, pageable);
+
         List<ListingResponse> listings =
-                listingRepository
-                        .search(query, type, category, sort)
+                listingPage.getContent()
                         .stream()
                         .map(this::toListingResponse)
                         .toList();
 
-        // 4. Redis
-        listingCacheService.cacheSearchResults(cacheKey, listings, searchCacheTtlHours);
+        PaginatedResponse<ListingResponse> response =
+                new PaginatedResponse<>(
+                        listings,
+                        listingPage.getNumber(),
+                        listingPage.getSize(),
+                        listingPage.getTotalElements(),
+                        listingPage.getTotalPages(),
+                        listingPage.isFirst(),
+                        listingPage.isLast()
+                );
 
-        return listings;
+        // Redis
+        listingCacheService.cacheSearchResults(cacheKey, response, searchCacheTtlHours);
+
+        return response;
     }
-
 }
