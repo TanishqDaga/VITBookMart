@@ -7,6 +7,7 @@ import com.vitbookmart.dto.response.ListingResponse;
 import com.vitbookmart.dto.response.SellerInfo;
 import com.vitbookmart.entity.Listing;
 import com.vitbookmart.entity.enums.ListingType;
+import com.vitbookmart.service.ImageService;
 import org.bson.types.ObjectId;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +15,12 @@ import java.util.ArrayList;
 
 @Component
 public class ListingMapper {
+
+    private final ImageService imageService;
+
+    public ListingMapper(ImageService imageService) {
+        this.imageService = imageService;
+    }
 
     public Listing toEntity(CreateListingRequest request, ObjectId sellerId) {
 
@@ -95,7 +102,7 @@ public class ListingMapper {
                 listing.getSubject(),
                 listing.getPrice(),
                 listing.getType(),
-                listing.getImageUrl(),
+                imageService.getThumbnailUrl(listing.getImageUrl()),
                 listing.getStatus(),
                 listing.getCreatedAt(),
                 listing.getUpdatedAt()

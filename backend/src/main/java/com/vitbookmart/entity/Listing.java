@@ -11,6 +11,7 @@ import org.bson.types.ObjectId;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
@@ -20,6 +21,18 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@CompoundIndex(
+        name = "idx_listing_status_createdAt",
+        def = "{'status': 1, 'createdAt': -1}"
+)
+@CompoundIndex(
+        name = "idx_listing_status_type_category_createdAt",
+        def = "{'status': 1, 'type': 1, 'category': 1, 'createdAt': -1}"
+)
+@CompoundIndex(
+        name = "idx_listing_status_type_category_price",
+        def = "{'status': 1, 'type': 1, 'category': 1, 'price': 1}"
+)
 @Document(collection = "listings")
 public class Listing {
 

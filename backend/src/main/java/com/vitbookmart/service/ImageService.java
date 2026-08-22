@@ -28,4 +28,16 @@ public class ImageService {
 
         return result.get("secure_url").toString();
     }
+
+    public String getThumbnailUrl(String imageUrl) {
+
+        if (imageUrl == null || imageUrl.isBlank()) {
+            return imageUrl;
+        }
+
+        return imageUrl.replace(
+                "/upload/",
+                "/upload/w_200,h_400,c_limit,q_auto,f_auto/"
+        );
+    }
 }
