@@ -1,13 +1,18 @@
 package com.vitbookmart.service;
 
 import com.vitbookmart.dto.request.CreateAdminRequest;
+import com.vitbookmart.dto.request.UpdateAdminListingRequest;
+import com.vitbookmart.dto.request.UpdateAdminRequest;
+import com.vitbookmart.dto.response.AdminResponse;
+import com.vitbookmart.dto.response.ListingDetailResponse;
+import com.vitbookmart.dto.response.SellerInfo;
+import com.vitbookmart.dto.response.UserResponse;
 import com.vitbookmart.entity.Admin;
 import com.vitbookmart.entity.Listing;
 import com.vitbookmart.entity.User;
-import com.vitbookmart.entity.enums.AdminRole;
-import com.vitbookmart.entity.enums.ListingStatus;
-import com.vitbookmart.entity.enums.UserStatus;
+import com.vitbookmart.entity.enums.*;
 import com.vitbookmart.exception.ResourceNotFoundException;
+import com.vitbookmart.mapper.ListingMapper;
 import com.vitbookmart.repository.AdminRepository;
 import com.vitbookmart.repository.ListingRepository;
 import com.vitbookmart.repository.UserRepository;
@@ -27,14 +32,17 @@ public class AdminService {
     private final UserRepository userRepository;
     private final ListingRepository listingRepository;
     private final WishlistService wishlistService;
-    private final PasswordEncoder passwordEncoder;
     private final WishlistRepository wishlistRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final ListingMapper listingMapper;
+    private final ListingCacheService listingCacheService;
 
 
     
     // ADMIN MANAGEMENT
+    
 
-    public Admin createAdmin(CreateAdminRequest request) {
+    public AdminResponse createAdmin(CreateAdminRequest request) {
 
         if (adminRepository.existsByUsername(request.username())) {
             throw new IllegalArgumentException("Admin already exists");
@@ -43,36 +51,46 @@ public class AdminService {
         Admin admin = new Admin();
 
         admin.setUsername(request.username());
-
         admin.setPassword(passwordEncoder.encode(request.password()));
         admin.setRole(AdminRole.ADMIN);
         admin.setActive(true);
 
-        return adminRepository.save(admin);
+        Admin savedAdmin = adminRepository.save(admin);
+
+        return toAdminResponse(savedAdmin);
     }
 
 
-    public Admin getById(ObjectId adminId) {
+    public AdminResponse getById(ObjectId adminId) {
 
-        return adminRepository.findById(adminId).orElseThrow(() -> new IllegalArgumentException("Admin not found"));
+        Admin admin = getAdminEntity(adminId);
+
+        return toAdminResponse(admin);
     }
 
 
-    public Admin getByUsername(String username) {
+    public AdminResponse getByUsername(String username) {
 
-        return adminRepository.findByUsername(username).orElseThrow(() -> new IllegalArgumentException("Admin not found"));
+        Admin admin = adminRepository.findByUsername(username).orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
+
+        return toAdminResponse(admin);
     }
 
 
-    public List<Admin> getAll() {
+    public List<AdminResponse> getAll() {
 
-        return adminRepository.findAll();
+        return adminRepository.findAll()
+                .stream()
+                .map(this::toAdminResponse)
+                .toList();
     }
 
 
-    public Admin updateProfile(ObjectId adminId, String username) {
+    public AdminResponse updateProfile(ObjectId adminId, UpdateAdminRequest request) {
 
-        Admin admin = getById(adminId);
+        Admin admin = getAdminEntity(adminId);
+
+        String username = request.username();
 
         if (username != null && !username.isBlank() && !username.equals(admin.getUsername())) {
 
@@ -83,13 +101,17 @@ public class AdminService {
             admin.setUsername(username);
         }
 
-        return adminRepository.save(admin);
+        Admin savedAdmin = adminRepository.save(admin);
+
+        return toAdminResponse(savedAdmin);
     }
 
 
     public void deleteAdmin(ObjectId adminId) {
 
-        if (!adminRepository.existsById(adminId)) {throw new IllegalArgumentException("Admin not found");}
+        if (!adminRepository.existsById(adminId)) {
+            throw new ResourceNotFoundException("Admin not found");
+        }
 
         adminRepository.deleteById(adminId);
     }
@@ -99,45 +121,56 @@ public class AdminService {
     // USER MANAGEMENT
     
 
-    public User getUser(ObjectId userId) {
+    public UserResponse getUser(ObjectId userId) {
 
-        return userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User user = getUserEntity(userId);
+
+        return toUserResponse(user);
     }
 
 
-    public List<User> getAllUsers() {
+    public List<UserResponse> getAllUsers() {
 
-        return userRepository.findAll();
+        return userRepository.findAll()
+                .stream()
+                .map(this::toUserResponse)
+                .toList();
     }
 
 
-    public User terminateUser(ObjectId userId) {
+    public UserResponse terminateUser(ObjectId userId) {
 
-        User user = getUser(userId);
+        User user = getUserEntity(userId);
 
         user.setStatus(UserStatus.TERMINATED);
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        return toUserResponse(savedUser);
     }
 
 
-    public User makeUserPaid(ObjectId userId) {
+    public UserResponse makeUserPaid(ObjectId userId) {
 
-        User user = getUser(userId);
+        User user = getUserEntity(userId);
 
         user.setStatus(UserStatus.PAID);
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        return toUserResponse(savedUser);
     }
 
 
-    public User makeUserFree(ObjectId userId) {
+    public UserResponse makeUserFree(ObjectId userId) {
 
-        User user = getUser(userId);
+        User user = getUserEntity(userId);
 
         user.setStatus(UserStatus.FREE);
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        return toUserResponse(savedUser);
     }
 
 
@@ -151,10 +184,13 @@ public class AdminService {
         // Find all listings created by this user
         List<Listing> userListings = listingRepository.findBySellerId(userId);
 
-        // Remove those listings from all wishlists
+        // Remove listings from all wishlists
         for (Listing listing : userListings) {
 
             wishlistService.removeListingFromAllWishlists(listing.getId());
+
+            // Invalidate Redis cache for each listing
+            listingCacheService.invalidateListingCaches(listing.getId().toHexString());
         }
 
         // Delete all listings created by the user
@@ -174,52 +210,164 @@ public class AdminService {
     // LISTING MANAGEMENT
     
 
-    public Listing getListing(ObjectId listingId) {
+    public ListingDetailResponse getListing(ObjectId listingId) {
 
-        return listingRepository.findById(listingId).orElseThrow(() -> new IllegalArgumentException("Listing not found"));
+        Listing listing = getListingEntity(listingId);
+
+        return toListingDetailResponse(listing);
     }
 
 
-    public List<Listing> getAllListings() {
+    public List<ListingDetailResponse> getAllListings() {
 
-        return listingRepository.findAll();
+        return listingRepository.findAll()
+                .stream()
+                .map(this::toListingDetailResponse)
+                .toList();
     }
 
 
-    public List<Listing> getAvailableListings() {
+    public List<ListingDetailResponse> getAvailableListings() {
 
-        return listingRepository.findByStatus(ListingStatus.AVAILABLE);
+        return listingRepository
+                .findByStatus(ListingStatus.AVAILABLE)
+                .stream()
+                .map(this::toListingDetailResponse)
+                .toList();
     }
 
 
-    public List<Listing> getSoldListings() {
+    public List<ListingDetailResponse> getSoldListings() {
 
-        return listingRepository.findByStatus(ListingStatus.SOLD);
+        return listingRepository
+                .findByStatus(ListingStatus.SOLD)
+                .stream()
+                .map(this::toListingDetailResponse)
+                .toList();
     }
 
 
-    public Listing updateListing(ObjectId listingId, Listing updatedListing) {
+    public ListingDetailResponse updateListing(ObjectId listingId, UpdateAdminListingRequest request) {
 
-        Listing existingListing = getListing(listingId);
+        Listing existingListing = getListingEntity(listingId);
 
-        existingListing.setTitle(updatedListing.getTitle());
-        existingListing.setDescription(updatedListing.getDescription());
-        existingListing.setSubject(updatedListing.getSubject());
-        existingListing.setCategory(updatedListing.getCategory());
-        existingListing.setType(updatedListing.getType());
-        existingListing.setPrice(updatedListing.getPrice());
-        existingListing.setUnavailableExamSlots(updatedListing.getUnavailableExamSlots());
-        existingListing.setStatus(updatedListing.getStatus());
+        // Update basic listing fields
+        existingListing.setTitle(request.title());
+        existingListing.setDescription(request.description());
+        existingListing.setSubject(request.subject());
 
-        return listingRepository.save(existingListing);
+        // Convert String -> ListingCategory
+        existingListing.setCategory(ListingCategory.valueOf(request.category().toUpperCase()));
+
+        existingListing.setType(request.type());
+        existingListing.setPrice(request.price());
+
+        // Convert String -> ExamSlot
+        if (request.unavailableExamSlots() != null) {
+
+            List<ExamSlot> examSlots = request.unavailableExamSlots()
+                    .stream()
+                    .map(slot -> ExamSlot.valueOf(slot.toUpperCase()))
+                    .toList();
+
+            existingListing.setUnavailableExamSlots(examSlots);
+
+        }
+        else {
+
+            existingListing.setUnavailableExamSlots(List.of());
+        }
+
+        // Update status
+        existingListing.setStatus(request.status());
+
+        // Save
+        Listing savedListing = listingRepository.save(existingListing);
+
+        // Invalidate listing-related caches
+        listingCacheService.invalidateListingCaches(listingId.toHexString());
+
+        // Return existing ListingDetailResponse
+        return toListingDetailResponse(savedListing);
     }
-
 
     public void deleteListing(ObjectId listingId) {
 
-        listingRepository.deleteById(listingId);
 
-        // Remove the deleted listing from every user's wishlist
+        Listing listing = getListingEntity(listingId);
+
+        listingRepository.deleteById(listing.getId());
+
         wishlistService.removeListingFromAllWishlists(listingId);
+
+        listingCacheService.invalidateListingCaches(listingId.toHexString());
+    }
+
+    // ENTITY HELPERS
+
+    private Admin getAdminEntity(ObjectId adminId) {
+
+        return adminRepository.findById(adminId).orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
+    }
+
+
+    private User getUserEntity(ObjectId userId) {
+
+        return userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    }
+
+
+    private Listing getListingEntity(ObjectId listingId) {
+
+        return listingRepository.findById(listingId).orElseThrow(() -> new ResourceNotFoundException("Listing not found"));
+    }
+
+
+    
+    // RESPONSE MAPPERS
+    
+
+    private AdminResponse toAdminResponse(Admin admin) {
+
+
+        return new AdminResponse(
+                admin.getId(),
+                admin.getUsername(),
+                admin.getRole(),
+                admin.isActive()
+        );
+    }
+
+
+    private UserResponse toUserResponse(User user) {
+
+        return new UserResponse(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getWhatsappNumber(),
+                user.getHostel(),
+                user.getStatus(),
+                user.getCreatedAt(),
+                user.getUpdatedAt()
+        );
+    }
+
+
+    private ListingDetailResponse toListingDetailResponse(Listing listing) {
+
+        SellerInfo sellerInfo = null;
+
+        if (listing.getSellerId() != null) {
+
+            User seller = userRepository.findById(listing.getSellerId()).orElse(null);
+
+            if (seller != null) {
+
+                sellerInfo = new SellerInfo(seller.getName(), seller.getHostel());
+            }
+        }
+
+        return listingMapper.toDetailResponse(listing, sellerInfo);
     }
 }

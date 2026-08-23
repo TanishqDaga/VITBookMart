@@ -1,9 +1,11 @@
 package com.vitbookmart.controller;
 
 import com.vitbookmart.dto.request.CreateAdminRequest;
-import com.vitbookmart.entity.Admin;
-import com.vitbookmart.entity.Listing;
-import com.vitbookmart.entity.User;
+import com.vitbookmart.dto.request.UpdateAdminListingRequest;
+import com.vitbookmart.dto.request.UpdateAdminRequest;
+import com.vitbookmart.dto.response.AdminResponse;
+import com.vitbookmart.dto.response.ListingDetailResponse;
+import com.vitbookmart.dto.response.UserResponse;
 import com.vitbookmart.service.AdminService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,13 +22,12 @@ import java.util.List;
 public class AdminController {
 
     private final AdminService adminService;
-
-    // ADMIN MANAGEMENT
     
+    // ADMIN MANAGEMENT
 
     // Create admin
     @PostMapping("/create")
-    public ResponseEntity<Admin> createAdmin(@RequestBody @Valid CreateAdminRequest request) {
+    public ResponseEntity<AdminResponse> createAdmin(@RequestBody @Valid CreateAdminRequest request) {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(adminService.createAdmin(request));
     }
@@ -34,7 +35,7 @@ public class AdminController {
 
     // Get admin by ID
     @GetMapping("/{adminId}")
-    public ResponseEntity<Admin> getAdminById(@PathVariable ObjectId adminId) {
+    public ResponseEntity<AdminResponse> getAdminById(@PathVariable ObjectId adminId) {
 
         return ResponseEntity.ok(adminService.getById(adminId));
     }
@@ -42,7 +43,7 @@ public class AdminController {
 
     // Get admin by username
     @GetMapping("/username")
-    public ResponseEntity<Admin> getAdminByUsername(@RequestParam String username) {
+    public ResponseEntity<AdminResponse> getAdminByUsername(@RequestParam String username) {
 
         return ResponseEntity.ok(adminService.getByUsername(username));
     }
@@ -50,7 +51,7 @@ public class AdminController {
 
     // Get all admins
     @GetMapping("/admins")
-    public ResponseEntity<List<Admin>> getAllAdmins() {
+    public ResponseEntity<List<AdminResponse>> getAllAdmins() {
 
         return ResponseEntity.ok(adminService.getAll());
     }
@@ -58,9 +59,9 @@ public class AdminController {
 
     // Update admin username
     @PutMapping("/update/{adminId}")
-    public ResponseEntity<Admin> updateAdminProfile(@PathVariable ObjectId adminId, @RequestParam(required = false) String username) {
+    public ResponseEntity<AdminResponse> updateAdminProfile(@PathVariable ObjectId adminId, @RequestBody @Valid UpdateAdminRequest request) {
 
-        return ResponseEntity.ok(adminService.updateProfile(adminId, username));
+        return ResponseEntity.ok(adminService.updateProfile(adminId, request));
     }
 
 
@@ -80,7 +81,7 @@ public class AdminController {
 
     // Get user
     @GetMapping("/users/{userId}")
-    public ResponseEntity<User> getUser(@PathVariable ObjectId userId) {
+    public ResponseEntity<UserResponse> getUser(@PathVariable ObjectId userId) {
 
         return ResponseEntity.ok(adminService.getUser(userId));
     }
@@ -88,7 +89,7 @@ public class AdminController {
 
     // Get all users
     @GetMapping("/users")
-    public ResponseEntity<List<User>> getAllUsers() {
+    public ResponseEntity<List<UserResponse>> getAllUsers() {
 
         return ResponseEntity.ok(adminService.getAllUsers());
     }
@@ -96,7 +97,7 @@ public class AdminController {
 
     // Terminate user
     @PatchMapping("/users/terminate/{userId}")
-    public ResponseEntity<User> terminateUser(@PathVariable ObjectId userId) {
+    public ResponseEntity<UserResponse> terminateUser(@PathVariable ObjectId userId) {
 
         return ResponseEntity.ok(adminService.terminateUser(userId));
     }
@@ -104,7 +105,7 @@ public class AdminController {
 
     // Make user paid
     @PatchMapping("/users/paid/{userId}")
-    public ResponseEntity<User> makeUserPaid(@PathVariable ObjectId userId) {
+    public ResponseEntity<UserResponse> makeUserPaid(@PathVariable ObjectId userId) {
 
         return ResponseEntity.ok(adminService.makeUserPaid(userId));
     }
@@ -112,7 +113,7 @@ public class AdminController {
 
     // Make user free
     @PatchMapping("/users/free/{userId}")
-    public ResponseEntity<User> makeUserFree(@PathVariable ObjectId userId) {
+    public ResponseEntity<UserResponse> makeUserFree(@PathVariable ObjectId userId) {
 
         return ResponseEntity.ok(adminService.makeUserFree(userId));
     }
@@ -134,7 +135,7 @@ public class AdminController {
 
     // Get listing
     @GetMapping("/listings/{listingId}")
-    public ResponseEntity<Listing> getListing(@PathVariable ObjectId listingId) {
+    public ResponseEntity<ListingDetailResponse> getListing(@PathVariable ObjectId listingId) {
 
         return ResponseEntity.ok(adminService.getListing(listingId));
     }
@@ -142,7 +143,7 @@ public class AdminController {
 
     // Get all listings
     @GetMapping("/listings")
-    public ResponseEntity<List<Listing>> getAllListings() {
+    public ResponseEntity<List<ListingDetailResponse>> getAllListings() {
 
         return ResponseEntity.ok(adminService.getAllListings());
     }
@@ -150,7 +151,7 @@ public class AdminController {
 
     // Get available listings
     @GetMapping("/listings/available")
-    public ResponseEntity<List<Listing>> getAvailableListings() {
+    public ResponseEntity<List<ListingDetailResponse>> getAvailableListings() {
 
         return ResponseEntity.ok(adminService.getAvailableListings());
     }
@@ -158,7 +159,7 @@ public class AdminController {
 
     // Get sold listings
     @GetMapping("/listings/sold")
-    public ResponseEntity<List<Listing>> getSoldListings() {
+    public ResponseEntity<List<ListingDetailResponse>> getSoldListings() {
 
         return ResponseEntity.ok(adminService.getSoldListings());
     }
@@ -166,9 +167,11 @@ public class AdminController {
 
     // Update any listing
     @PutMapping("/listings/{listingId}")
-    public ResponseEntity<Listing> updateListing(@PathVariable ObjectId listingId, @RequestBody Listing updatedListing) {
+    public ResponseEntity<ListingDetailResponse> updateListing(
+            @PathVariable ObjectId listingId,
+            @RequestBody @Valid UpdateAdminListingRequest request) {
 
-        return ResponseEntity.ok(adminService.updateListing(listingId, updatedListing));
+        return ResponseEntity.ok(adminService.updateListing(listingId, request));
     }
 
 
