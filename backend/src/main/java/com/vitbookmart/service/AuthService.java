@@ -26,8 +26,7 @@ public class AuthService {
         GoogleUserInfo googleUser = googleOAuthService.authenticate(code);
 
         // Only VIT student accounts
-        if (googleUser.getEmail() == null ){
-//                || !googleUser.getEmail().toLowerCase().endsWith("@vitstudent.ac.in")) {
+        if (googleUser.getEmail() == null || !googleUser.getEmail().toLowerCase().endsWith("@vitstudent.ac.in")) {
 
             throw new IllegalArgumentException("Only VIT student accounts are allowed");
         }

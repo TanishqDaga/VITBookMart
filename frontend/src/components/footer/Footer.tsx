@@ -104,21 +104,7 @@ export function Footer() {
                   <span className="text-ink-soft">Set VITE_CONTACT_EMAIL to show a contact</span>
                 )}
               </li>
-              <li className="flex items-center gap-2 text-sm text-ink-muted">
-                <Github className="h-4 w-4 shrink-0 text-ink-soft" aria-hidden />
-                {env.contributeUrl ? (
-                  <a
-                    href={env.contributeUrl}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="truncate transition-colors hover:text-brand-600"
-                  >
-                    Project repository
-                  </a>
-                ) : (
-                  <span className="text-ink-soft">Set VITE_CONTRIBUTE_URL to link the repo</span>
-                )}
-              </li>
+             
             </ul>
           </div>
         </div>

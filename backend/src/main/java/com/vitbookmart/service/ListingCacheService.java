@@ -194,6 +194,16 @@ public class ListingCacheService {
             PaginatedResponse<ListingResponse> response,
             long ttlHours) {
 
+        // Do not cache empty search results
+        if (response == null
+                || response.getContent() == null
+                || response.getContent().isEmpty()) {
+
+            log.debug("Skipping search cache because result is empty: {}", cacheKey);
+
+            return;
+        }
+
         try {
 
             String json = objectMapper.writeValueAsString(response);

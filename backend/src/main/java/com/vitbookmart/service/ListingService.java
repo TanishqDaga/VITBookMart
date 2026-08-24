@@ -128,14 +128,6 @@ public class ListingService {
         return response;
     }
 
-    public List<ListingResponse> getAll() {
-
-        return listingRepository.findAll()
-                .stream()
-                .map(this::toListingResponse)
-                .toList();
-    }
-
     public List<ListingResponse> getAllAvailableListings() {
 
         return listingRepository.findByStatus(ListingStatus.AVAILABLE)
@@ -182,19 +174,6 @@ public class ListingService {
         listingCacheService.invalidateListingCaches(listingId.toHexString());
 
         return toListingResponse(savedListing);
-    }
-
-    public void deleteListing(ObjectId listingId, ObjectId sellerId) {
-
-        Listing listing = getEntityById(listingId);
-
-        validateOwnership(listing, sellerId);
-
-        listingRepository.deleteById(listingId);
-
-        wishlistService.removeListingFromAllWishlists(listingId);
-
-        listingCacheService.invalidateListingCaches(listingId.toHexString());
     }
 
     public Listing getEntityById(ObjectId listingId) {
