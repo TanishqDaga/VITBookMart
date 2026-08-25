@@ -26,6 +26,7 @@ public class SecurityConfig {
 
         http
                 .csrf(csrf -> csrf.disable())
+                .cors(cors -> {})
 
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
@@ -54,6 +55,7 @@ public class SecurityConfig {
 
                         // PUBLIC LISTING APIs
                         .requestMatchers(
+                                HttpMethod.GET,
                                 "/api/listings/search",
                                 "/api/listings/latest",
                                 "/api/listings",

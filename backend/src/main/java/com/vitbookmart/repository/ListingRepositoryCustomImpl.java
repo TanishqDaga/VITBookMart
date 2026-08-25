@@ -15,6 +15,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Repository
 @RequiredArgsConstructor
@@ -33,36 +34,33 @@ public class ListingRepositoryCustomImpl implements ListingRepositoryCustom {
         Query mongoQuery = new Query();
 
         // Only show available listings
-        mongoQuery.addCriteria(
-                Criteria.where("status").is(ListingStatus.AVAILABLE)
-        );
+        mongoQuery.addCriteria(Criteria.where("status").is(ListingStatus.AVAILABLE));
 
-        // Search title OR subject
         if (query != null && !query.isBlank()) {
 
+            String searchTerm = query.trim();
+
+            if (searchTerm.length() > 70) {
+                throw new IllegalArgumentException("Search query is too long");
+            }
+            String escapedQuery = Pattern.quote(searchTerm);
+
             Criteria searchCriteria = new Criteria().orOperator(
-                    Criteria.where("title")
-                            .regex(query, "i"),
+                    Criteria.where("title").regex(escapedQuery, "i"),
 
-                    Criteria.where("subject")
-                            .regex(query, "i")
+                    Criteria.where("subject").regex(escapedQuery, "i")
             );
-
             mongoQuery.addCriteria(searchCriteria);
         }
 
         // Filter by type
         if (type != null) {
-            mongoQuery.addCriteria(
-                    Criteria.where("type").is(type)
-            );
+            mongoQuery.addCriteria(Criteria.where("type").is(type));
         }
 
         // Filter by category
         if (category != null) {
-            mongoQuery.addCriteria(
-                    Criteria.where("category").is(category)
-            );
+            mongoQuery.addCriteria(Criteria.where("category").is(category));
         }
 
         // Sorting

@@ -329,7 +329,6 @@ public class AdminService {
 
     private AdminResponse toAdminResponse(Admin admin) {
 
-
         return new AdminResponse(
                 admin.getId(),
                 admin.getUsername(),
