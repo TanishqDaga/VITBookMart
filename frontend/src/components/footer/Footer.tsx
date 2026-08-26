@@ -1,9 +1,7 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Github, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
 import { env } from "@/config/env";
 import { SITE } from "@/constants/app";
-import { Modal } from "@/components/common/Modal";
 import { BrandMark } from "@/components/navbar/BrandMark";
 
 const QUICK_LINKS = [
@@ -15,8 +13,6 @@ const QUICK_LINKS = [
 ];
 
 export function Footer() {
-  const [contributeOpen, setContributeOpen] = useState(false);
-
   return (
     <footer className="mt-20 border-t border-line bg-white">
       <div className="page-shell pb-24 pt-12 sm:py-14 md:pb-12">
@@ -57,32 +53,23 @@ export function Footer() {
             </h2>
 
             <div className="mt-4 rounded-2xl border border-line bg-surface-muted p-4">
-              <p className="text-sm font-semibold text-ink">
-                Want to contribute and get your name into the developers section?
-              </p>
+            
               <p className="mt-1.5 text-[13px] leading-relaxed text-ink-muted">
                 Help improve {SITE.name} and we'll credit you here.
               </p>
 
-              {env.contributeUrl ? (
+              {env.contactEmail ? (
                 <a
-                  href={env.contributeUrl}
-                  target="_blank"
-                  rel="noreferrer noopener"
+                  href={`mailto:${env.contactEmail}`}
                   className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-brand-600 transition-colors hover:text-brand-700"
                 >
-                  Contribute to {SITE.name}
-                  <ArrowRight className="h-4 w-4" aria-hidden />
+                  <Mail className="h-4 w-4" aria-hidden />
+                  {env.contactEmail}
                 </a>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => setContributeOpen(true)}
-                  className="mt-3 inline-flex items-center gap-1.5 rounded-md text-sm font-bold text-brand-600 transition-colors hover:text-brand-700"
-                >
-                  Contribute to {SITE.name}
-                  <ArrowRight className="h-4 w-4" aria-hidden />
-                </button>
+                <span className="mt-3 inline-flex items-center gap-1.5 text-sm text-ink-soft">
+                  Set VITE_CONTACT_EMAIL to show a contact
+                </span>
               )}
             </div>
 
@@ -101,10 +88,11 @@ export function Footer() {
                   </a>
                 ) : (
                   // No real address was provided — say so rather than invent one.
-                  <span className="text-ink-soft">Set VITE_CONTACT_EMAIL to show a contact</span>
+                  <span className="text-ink-soft">
+                    Set VITE_CONTACT_EMAIL to show a contact
+                  </span>
                 )}
               </li>
-             
             </ul>
           </div>
         </div>
@@ -113,25 +101,11 @@ export function Footer() {
           <p className="text-[13px] text-ink-soft">
             © {SITE.year} {SITE.name}
           </p>
-          <p className="text-[13px] text-ink-soft">Built for the VIT student community.</p>
+          <p className="text-[13px] text-ink-soft">
+            Built for the VIT student community.
+          </p>
         </div>
       </div>
-
-      <Modal
-        open={contributeOpen}
-        onClose={() => setContributeOpen(false)}
-        title="Contribute to VITBookMart"
-        description="This build doesn't have a contribution link configured yet."
-      >
-        <div className="space-y-3 pb-6 text-sm leading-relaxed text-ink-muted">
-          <p>
-            Set <code className="rounded bg-surface-sunken px-1.5 py-0.5 font-mono text-[13px] text-ink">VITE_CONTRIBUTE_URL</code>{" "}
-            in your <code className="rounded bg-surface-sunken px-1.5 py-0.5 font-mono text-[13px] text-ink">.env</code> file to point this
-            call to action at your repository or contribution guide.
-          </p>
-        
-        </div>
-      </Modal>
     </footer>
   );
 }

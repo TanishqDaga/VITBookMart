@@ -36,6 +36,7 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         // ADMIN LOGIN
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/admin/auth/login",
@@ -60,6 +61,10 @@ public class SecurityConfig {
                                 "/api/listings/latest",
                                 "/api/listings",
                                 "/api/listings/{listingId}"
+                        ).permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/health"
                         ).permitAll()
 
                         .requestMatchers(

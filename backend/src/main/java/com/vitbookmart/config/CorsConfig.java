@@ -18,8 +18,8 @@ public class CorsConfig {
 
         // Frontend origins allowed to call this backend
         configuration.setAllowedOrigins(List.of(
-                "http://localhost:5173"
-                // "https://production-frontend.com"
+                "http://localhost:5173",
+                "https://vitbookmart.in"
         ));
 
         // HTTP methods your frontend may use
