@@ -9,7 +9,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @RequiredArgsConstructor
@@ -22,13 +21,12 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(
-            HttpSecurity http,
-            CorsConfigurationSource corsConfigurationSource
+            HttpSecurity http
     ) throws Exception {
 
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource))
+                .cors(cors -> {})
 
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
@@ -37,16 +35,21 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
+
+                        // CORS PREFLIGHT
+                        .requestMatchers(
+                                HttpMethod.OPTIONS,
+                                "/**"
+                        ).permitAll()
+
                         // ADMIN LOGIN
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/admin/auth/login",
                                 "/api/admin/auth/refresh"
                         ).permitAll()
+
                         // ADMIN APIs
-                        // Everything under /api/admin/** requires
-                        // ROLE_ADMIN.
                         .requestMatchers(
                                 "/api/admin/**"
                         ).hasRole("ADMIN")
@@ -64,6 +67,7 @@ public class SecurityConfig {
                                 "/api/listings",
                                 "/api/listings/{listingId}"
                         ).permitAll()
+
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/health"
@@ -73,13 +77,19 @@ public class SecurityConfig {
                                 HttpMethod.GET,
                                 "/api/listings/*"
                         ).permitAll()
+
                         // EVERYTHING ELSE
                         .anyRequest().authenticated()
                 )
 
                 // JWT authentication
                 .oauth2ResourceServer(oauth2 ->
-                        oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(new JwtAuthenticationConverter())));
+                        oauth2.jwt(jwt ->
+                                jwt.jwtAuthenticationConverter(
+                                        new JwtAuthenticationConverter()
+                                )
+                        )
+                );
 
         return http.build();
     }
