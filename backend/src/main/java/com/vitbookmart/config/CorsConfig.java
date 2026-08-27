@@ -18,7 +18,9 @@ public class CorsConfig {
 
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:5173",
-                "https://vitbookmart.in"
+                "https://vitbookmart.in",
+                "https://production.d3qvdzkszd9ug.amplifyapp.com",
+                "https://www.vitbookmart.in"
         ));
 
         configuration.setAllowedMethods(List.of(

@@ -86,6 +86,16 @@ public class ListingController {
         return ResponseEntity.ok(listingService.markAsSold(listingId, sellerId));
     }
 
+    // MARK LISTING AS AVAILABLE AGAIN
+
+    @PatchMapping("/markAvailable/{listingId}")
+    public ResponseEntity<ListingResponse> markAsAvailable(Authentication authentication, @PathVariable ObjectId listingId) {
+
+        ObjectId sellerId = authenticatedUserService.getCurrentUserId(authentication);
+
+        return ResponseEntity.ok(listingService.markAsAvailable(listingId, sellerId));
+    }
+
     //GET LATEST LISTINGS
     @GetMapping("/latest")
     public ResponseEntity<PaginatedResponse<ListingResponse>> getLatestListings(

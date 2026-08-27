@@ -176,6 +176,21 @@ public class ListingService {
         return toListingResponse(savedListing);
     }
 
+    public ListingResponse markAsAvailable(ObjectId listingId, ObjectId sellerId) {
+
+        Listing listing = getEntityById(listingId);
+
+        validateOwnership(listing, sellerId);
+
+        listing.setStatus(ListingStatus.AVAILABLE);
+
+        Listing savedListing = listingRepository.save(listing);
+
+        listingCacheService.invalidateListingCaches(listingId.toHexString());
+
+        return toListingResponse(savedListing);
+    }
+
     public Listing getEntityById(ObjectId listingId) {
 
         return listingRepository.findById(listingId).orElseThrow(() -> new ResourceNotFoundException("Listing not found"));
