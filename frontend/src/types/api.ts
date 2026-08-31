@@ -45,7 +45,7 @@ export interface AuthResponse {
 export interface ListingResponse {
   id: ObjectIdString;
   title: string;
-  subject: string;
+  subject: string | null;
   price: number | null;
   type: ListingType;
   imageUrl: string | null;
@@ -68,7 +68,7 @@ export interface ListingDetailResponse {
   id: ObjectIdString;
   title: string;
   description: string | null;
-  subject: string;
+  subject: string | null;
   category: ListingCategory | null;
   type: ListingType;
   price: number | null;
@@ -114,7 +114,7 @@ export interface ErrorResponse {
 export interface CreateListingRequest {
   title: string;
   description: string;
-  subject: string;
+  subject: string | null;
   category: ListingCategory;
   type: ListingType;
   price: number;
@@ -125,13 +125,12 @@ export interface CreateListingRequest {
 export interface UpdateListingRequest {
   title?: string;
   description?: string;
-  subject?: string;
+  subject?: string | null;
   category?: ListingCategory;
   type?: ListingType;
   price?: number;
   unavailableExamSlots?: ExamSlot[];
 }
-
 /** Backend: dto/request/UpdateUserProfileRequest. Email is NOT updatable. */
 export interface UpdateUserProfileRequest {
   name?: string;

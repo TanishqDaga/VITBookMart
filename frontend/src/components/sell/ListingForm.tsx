@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -27,19 +27,33 @@ import { ImageUploader } from "./ImageUploader";
  * are @NotNull, price is @DecimalMin("0.0"). The backend sets no maximum lengths,
  * so neither do we — the maxLength attributes below are input guardrails only.
  */
-const schema = z.object({
-  title: z.string().trim().min(1, "Title is required"),
-  subject: z.string().trim().min(1, "Subject is required"),
-  description: z.string().trim().min(1, "Description is required"),
-  category: z.enum(LISTING_CATEGORIES, { required_error: "Category is required" }),
-  type: z.enum(LISTING_TYPES, { required_error: "Listing type is required" }),
-  price: z
-    .string()
-    .trim()
-    .min(1, "Price is required")
-    .refine((value) => !Number.isNaN(Number(value)), "Enter a number")
-    .refine((value) => Number(value) >= 0, "Price cannot be negative"),
-});
+const schema = z
+  .object({
+    title: z.string().trim().min(1, "Title is required"),
+    subject: z.string(),
+    description: z.string().trim().min(1, "Description is required"),
+    category: z.enum(LISTING_CATEGORIES, {
+      required_error: "Category is required",
+    }),
+    type: z.enum(LISTING_TYPES, {
+      required_error: "Listing type is required",
+    }),
+    price: z
+      .string()
+      .trim()
+      .min(1, "Price is required")
+      .refine((value) => !Number.isNaN(Number(value)), "Enter a number")
+      .refine((value) => Number(value) >= 0, "Price cannot be negative"),
+  })
+  .superRefine((values, ctx) => {
+    if (values.category !== "CALCULATOR" && !values.subject.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["subject"],
+        message: "Subject is required",
+      });
+    }
+  });
 
 type FormValues = z.infer<typeof schema>;
 
@@ -50,7 +64,10 @@ export interface ListingFormSubmit {
 
 interface ListingFormProps {
   mode: "create" | "edit";
-  defaultValues?: Partial<FormValues> & { unavailableExamSlots?: ExamSlot[] };
+  defaultValues?: Partial<Omit<FormValues, "subject">> & {
+    subject?: string | null;
+    unavailableExamSlots?: ExamSlot[];
+  };
   existingImageUrl?: string | null;
   onSubmit: (payload: ListingFormSubmit) => void;
   isSubmitting: boolean;
@@ -87,13 +104,14 @@ export function ListingForm({
   const [imageError, setImageError] = useState<string | undefined>();
   const [slots, setSlots] = useState<ExamSlot[]>(defaultValues?.unavailableExamSlots ?? []);
 
-  const {
-    register,
-    handleSubmit,
-    control,
-    watch,
-    formState: { errors },
-  } = useForm<FormValues>({
+const {
+  register,
+  handleSubmit,
+  control,
+  watch,
+  setValue,
+  formState: { errors },
+} = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       title: defaultValues?.title ?? "",
@@ -105,7 +123,14 @@ export function ListingForm({
     },
   });
 
-  const selectedType = watch("type");
+const selectedType = watch("type");
+const selectedCategory = watch("category");
+
+useEffect(() => {
+  if (selectedCategory === "CALCULATOR") {
+    setValue("subject", "");
+  }
+}, [selectedCategory, setValue]);
 
   const submit = handleSubmit((values) => {
     if (mode === "create" && !image) {
@@ -114,19 +139,21 @@ export function ListingForm({
     }
     setImageError(undefined);
 
-    onSubmit({
-      request: {
-        title: values.title.trim(),
-        description: values.description.trim(),
-        subject: values.subject.trim(),
-        category: values.category,
-        type: values.type,
-        price: Number(values.price),
-        // The backend clears slots for SALE anyway; don't send noise.
-        unavailableExamSlots: values.type === "RENT" ? slots : [],
-      },
-      image,
-    });
+      onSubmit({
+        request: {
+          title: values.title.trim(),
+          description: values.description.trim(),
+          subject:
+            values.category === "CALCULATOR"
+              ? null
+              : values.subject.trim(),
+          category: values.category,
+          type: values.type,
+          price: Number(values.price),
+          unavailableExamSlots: values.type === "RENT" ? slots : [],
+        },
+        image,
+      });
   });
 
   return (
@@ -147,22 +174,24 @@ export function ListingForm({
           )}
         </Field>
 
-        <Field
-          label="Subject"
-          required
-          hint="Searches match the title and the subject, so use the name students would type."
-          error={errors.subject?.message}
-        >
-          {(props) => (
-            <Input
-              {...props}
-              {...register("subject")}
-              maxLength={120}
-              placeholder="e.g. Engineering Chemistry"
-              autoComplete="off"
-            />
-          )}
-        </Field>
+       {selectedCategory !== "CALCULATOR" && (
+          <Field
+            label="Subject"
+            required
+            hint="Searches match the title and the subject, so use the name students would type."
+            error={errors.subject?.message}
+          >
+            {(props) => (
+              <Input
+                {...props}
+                {...register("subject")}
+                maxLength={120}
+                placeholder="e.g. Engineering Chemistry"
+                autoComplete="off"
+              />
+            )}
+          </Field>
+        )}
 
         <Field
           label="Description"

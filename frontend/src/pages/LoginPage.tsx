@@ -46,7 +46,7 @@ export default function LoginPage() {
 
           <h1 className="mt-5 text-display-sm font-extrabold">Welcome to VITBookMart</h1>
           <p className="mt-2.5 text-sm leading-relaxed text-ink-muted">
-            Buy, sell and rent books and notes within VIT.
+            Secure & private — your details are only used to keep VITBookMart safe.
           </p>
 
           <div className="mt-8">
@@ -65,14 +65,14 @@ export default function LoginPage() {
           </div>
 
           <p className="mt-4 text-[13px] text-ink-soft">
-            Sign in using your VIT student account.
+            Sign in using your VIT google account.
           </p>
 
           <div className="mt-8 flex items-start gap-2.5 rounded-xl bg-surface-muted px-4 py-3.5 text-left">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-ink-soft" aria-hidden />
             <p className="text-xs leading-relaxed text-ink-muted">
               Please use your VIT student Google account. Your account is verified by
-              VITBookMart when you sign in.
+              VITBookMart when you sign in 100% safe.
             </p>
           </div>
         </div>

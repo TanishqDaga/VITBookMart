@@ -16,7 +16,6 @@ public record UpdateAdminListingRequest(
         @NotBlank(message = "Description is required")
         String description,
 
-        @NotBlank(message = "Subject is required")
         String subject,
 
         @NotBlank(message = "Category is required")

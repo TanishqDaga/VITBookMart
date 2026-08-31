@@ -17,7 +17,7 @@ public record CreateListingRequest(
         @NotBlank(message = "Description is required")
         String description,
 
-        @NotBlank(message = "Subject is required")
+
         String subject,
 
         @NotNull(message = "Category is required")

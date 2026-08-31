@@ -211,12 +211,19 @@ public class ListingService {
             throw new IllegalArgumentException("Description is required");
         }
 
-        if (listing.getSubject() == null || listing.getSubject().isBlank()) {
-            throw new IllegalArgumentException("Subject is required");
-        }
-
         if (listing.getCategory() == null) {
             throw new IllegalArgumentException("Category is required");
+        }
+
+        if (listing.getCategory() != ListingCategory.CALCULATOR) {
+
+            if (listing.getSubject() == null || listing.getSubject().isBlank()) {
+                throw new IllegalArgumentException("Subject is required");
+            }
+
+        } else {
+
+            listing.setSubject(null);
         }
 
         if (listing.getType() == null) {
@@ -229,7 +236,6 @@ public class ListingService {
 
         validateExamSlots(listing);
     }
-
     private void validateExamSlots(Listing listing) {
 
         if (listing.getType() == ListingType.SALE) {

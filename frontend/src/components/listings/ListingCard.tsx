@@ -80,7 +80,11 @@ export function ListingCard({
           </Link>
         </h3>
 
-        <p className="mt-1 line-clamp-1 text-[13px] text-ink-muted">{listing.subject}</p>
+        {listing.subject && (
+         <p className="mt-1 line-clamp-1 text-[13px] text-ink-muted">
+                {listing.subject}
+        </p>
+        )}
 
         <div className="mt-auto flex items-end justify-between gap-2 pt-3">
           <div>

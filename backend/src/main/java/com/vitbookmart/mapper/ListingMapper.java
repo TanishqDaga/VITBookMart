@@ -6,6 +6,7 @@ import com.vitbookmart.dto.response.ListingDetailResponse;
 import com.vitbookmart.dto.response.ListingResponse;
 import com.vitbookmart.dto.response.SellerInfo;
 import com.vitbookmart.entity.Listing;
+import com.vitbookmart.entity.enums.ListingCategory;
 import com.vitbookmart.entity.enums.ListingType;
 import com.vitbookmart.service.ImageService;
 import org.bson.types.ObjectId;
@@ -29,8 +30,12 @@ public class ListingMapper {
         listing.setSellerId(sellerId);
         listing.setTitle(request.title());
         listing.setDescription(request.description());
-        listing.setSubject(request.subject());
         listing.setCategory(request.category());
+        if (request.category() == ListingCategory.CALCULATOR) {
+            listing.setSubject(null);
+        } else {
+            listing.setSubject(request.subject());
+        }
         listing.setType(request.type());
         listing.setPrice(request.price());
 
@@ -60,12 +65,18 @@ public class ListingMapper {
             listing.setDescription(request.description());
         }
 
-        if (request.subject() != null) {
-            listing.setSubject(request.subject());
-        }
-
         if (request.category() != null) {
             listing.setCategory(request.category());
+
+            if (request.category() == ListingCategory.CALCULATOR) {
+                listing.setSubject(null);
+            }
+        }
+
+        if (request.subject() != null
+                && listing.getCategory() != ListingCategory.CALCULATOR) {
+
+            listing.setSubject(request.subject());
         }
 
         if (request.type() != null) {

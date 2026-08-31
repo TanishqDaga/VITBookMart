@@ -8,19 +8,19 @@ import type { ListingCategory, ListingStatus, ListingType, SortValue } from "@/t
 export const CATEGORY_LABELS: Record<ListingCategory, string> = {
   BOOK: "Books",
   NOTES: "Notes",
-  EBOOK_PRINTOUT: "E-books & printouts",
+  CALCULATOR: "Calculators",
 };
 
 export const CATEGORY_LABELS_SHORT: Record<ListingCategory, string> = {
   BOOK: "Books",
   NOTES: "Notes",
-  EBOOK_PRINTOUT: "E-books",
+  CALCULATOR: "Calculators",
 };
 
 export const CATEGORY_DESCRIPTIONS: Record<ListingCategory, string> = {
   BOOK: "Textbooks, reference books and lab manuals",
   NOTES: "Handwritten and printed class notes",
-  EBOOK_PRINTOUT: "Soft copies and printed material",
+  CALCULATOR: "Scientific and academic calculators",
 };
 
 export const TYPE_LABELS: Record<ListingType, string> = {

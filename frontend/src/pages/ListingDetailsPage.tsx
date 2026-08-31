@@ -140,7 +140,11 @@ export default function ListingDetailsPage() {
           </div>
 
           <h1 className="mt-3.5 text-display-sm font-extrabold">{listing.title}</h1>
-          <p className="mt-1.5 text-sm font-medium text-ink-muted">{listing.subject}</p>
+          {listing.subject && (
+          <p className="mt-1.5 text-sm font-medium text-ink-muted">
+            {listing.subject}
+          </p>
+          )}
 
           <p className="mt-5 text-3xl font-extrabold tracking-tight text-ink">
             {formatPrice(listing.price)}

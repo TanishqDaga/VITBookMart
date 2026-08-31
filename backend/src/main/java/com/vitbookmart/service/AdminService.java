@@ -254,10 +254,18 @@ public class AdminService {
         // Update basic listing fields
         existingListing.setTitle(request.title());
         existingListing.setDescription(request.description());
-        existingListing.setSubject(request.subject());
+        ListingCategory category = ListingCategory.valueOf(request.category().toUpperCase());
 
-        // Convert String -> ListingCategory
-        existingListing.setCategory(ListingCategory.valueOf(request.category().toUpperCase()));
+        existingListing.setCategory(category);
+
+        if (category != ListingCategory.CALCULATOR && (request.subject() == null || request.subject().isBlank())) {
+            throw new IllegalArgumentException("Subject is required");
+        }
+        if (category == ListingCategory.CALCULATOR) {
+            existingListing.setSubject(null);
+        } else {
+            existingListing.setSubject(request.subject());
+        }
 
         existingListing.setType(request.type());
         existingListing.setPrice(request.price());
