@@ -246,7 +246,7 @@ export default function ListingDetailsPage() {
             </div>
 
             <p className="mt-4 text-xs leading-relaxed text-ink-soft">
-              Contact details stay private. Choosing "Contact seller" opens WhatsApp with
+              Choosing "Contact seller" opens WhatsApp with
               the number the seller registered.
             </p>
           </section>

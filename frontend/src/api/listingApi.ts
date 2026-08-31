@@ -83,6 +83,10 @@ export const listingApi = {
   markAsSold(listingId: ObjectIdString) {
     return patch<ListingResponse>(`/api/listings/markSold/${listingId}`);
   },
+//Mark Available
+  markAsAvailable(listingId: ObjectIdString) {
+  return patch<ListingResponse>(`/api/listings/markAvailable/${listingId}`);
+},
 
   /**
    * GET /api/listings/contact/{listingId} -> { whatsappUrl }.

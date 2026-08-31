@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { CheckCircle2, Eye, PackagePlus, Pencil } from "lucide-react";
-import { useMarkAsSold, useMyListings } from "@/hooks/useListings";
+import {useMarkAsAvailable,useMarkAsSold,useMyListings,} from "@/hooks/useListings";
 import { ButtonLink } from "@/components/common/Button";
 import { ConfirmDialog } from "@/components/common/Modal";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -16,8 +16,11 @@ const ACTION_CLASS =
 
 export default function MyListingsPage() {
   const { data, isPending, isError, error, refetch } = useMyListings();
-  const markAsSold = useMarkAsSold();
-  const [pendingSold, setPendingSold] = useState<ListingResponse | null>(null);
+const markAsSold = useMarkAsSold();
+const markAsAvailable = useMarkAsAvailable();
+
+const [pendingSold, setPendingSold] = useState<ListingResponse | null>(null);
+const [pendingAvailable, setPendingAvailable] =useState<ListingResponse | null>(null);
 
   const available = data?.filter((listing) => listing.status === "AVAILABLE") ?? [];
   const sold = data?.filter((listing) => listing.status === "SOLD") ?? [];
@@ -95,10 +98,21 @@ export default function MyListingsPage() {
                 listings={sold}
                 showWishlist={false}
                 renderActions={(listing) => (
-                  <Link to={`/listing/${listing.id}`} className={ACTION_CLASS}>
-                    <Eye className="h-3.5 w-3.5" aria-hidden />
-                    View
-                  </Link>
+                    <>
+                    <Link to={`/listing/${listing.id}`} className={ACTION_CLASS}>
+                      <Eye className="h-3.5 w-3.5" aria-hidden />
+                      View
+                    </Link>
+
+                    <button
+                      type="button"
+                      onClick={() => setPendingAvailable(listing)}
+                      className={ACTION_CLASS}
+                    >
+                      <PackagePlus className="h-3.5 w-3.5" aria-hidden />
+                      Make available
+                    </button>
+                  </>
                 )}
               />
             </div>
@@ -125,6 +139,27 @@ export default function MyListingsPage() {
       >
         {pendingSold && (
           <p className="pb-2 text-sm font-semibold text-ink">{pendingSold.title}</p>
+        )}
+      </ConfirmDialog>
+      <ConfirmDialog
+        open={pendingAvailable !== null}
+        onClose={() => setPendingAvailable(null)}
+        onConfirm={() => {
+          if (!pendingAvailable) return;
+
+          markAsAvailable.mutate(pendingAvailable.id, {
+            onSettled: () => setPendingAvailable(null),
+          });
+        }}
+        title="Make this listing available again?"
+        description="This will put the listing back on the available marketplace."
+        confirmLabel="Make available"
+        isLoading={markAsAvailable.isPending}
+      >
+        {pendingAvailable && (
+          <p className="pb-2 text-sm font-semibold text-ink">
+            {pendingAvailable.title}
+          </p>
         )}
       </ConfirmDialog>
     </div>

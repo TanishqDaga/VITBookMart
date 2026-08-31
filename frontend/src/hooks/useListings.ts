@@ -124,6 +124,38 @@ export function useMarkAsSold() {
     },
   });
 }
+export function useMarkAsAvailable() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (listingId: ObjectIdString) =>
+      listingApi.markAsAvailable(listingId),
+
+    onSuccess(_data, listingId) {
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.listings.detail(listingId),
+      });
+
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.me.listings,
+      });
+
+      // Available listings appear in /latest and /search.
+      invalidatePublicFeeds(queryClient);
+
+      // The listing may still exist in someone's wishlist.
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.wishlist,
+      });
+
+      toast.success("Listing is available again");
+    },
+
+    onError(error) {
+      toast.error(errorMessage(error));
+    },
+  });
+}
 
 /**
  * GET /api/listings/contact/{id} — requires auth.
