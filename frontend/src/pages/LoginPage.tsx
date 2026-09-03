@@ -72,7 +72,7 @@ export default function LoginPage() {
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-ink-soft" aria-hidden />
             <p className="text-xs leading-relaxed text-ink-muted">
               Please use your VIT student Google account. Your account is verified by
-              VITBookMart when you sign in 100% safe.
+              VITBookMart when you sign in.
             </p>
           </div>
         </div>

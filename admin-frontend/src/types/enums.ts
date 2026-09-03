@@ -6,7 +6,7 @@ export type UserStatus = (typeof USER_STATUSES)[number];
 export const LISTING_TYPES = ["SALE", "RENT"] as const;
 export type ListingType = (typeof LISTING_TYPES)[number];
 
-export const LISTING_CATEGORIES = ["BOOK", "NOTES", "EBOOK_PRINTOUT"] as const;
+export const LISTING_CATEGORIES = ["BOOK", "NOTES", "CALCULATOR"] as const;
 export type ListingCategory = (typeof LISTING_CATEGORIES)[number];
 
 export const LISTING_STATUSES = ["AVAILABLE", "SOLD"] as const;

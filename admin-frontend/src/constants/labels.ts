@@ -14,7 +14,7 @@ export const LISTING_TYPE_LABELS: Record<ListingType, string> = {
 export const LISTING_CATEGORY_LABELS: Record<ListingCategory, string> = {
   BOOK: "Book",
   NOTES: "Notes",
-  EBOOK_PRINTOUT: "E-book / printout",
+  CALCULATOR: "Calculator",
 };
 
 export const LISTING_STATUS_LABELS: Record<ListingStatus, string> = {

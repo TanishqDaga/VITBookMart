@@ -30,17 +30,36 @@ type Scope = "all" | "available" | "sold";
  * AdminService.updateListing copies these eight fields off the body with no null
  * checks, so all eight must be present or the record gets nulled out.
  */
-const schema = z.object({
-  title: z.string().trim().min(1, "Title is required"),
-  subject: z.string().trim().min(1, "Subject is required"),
-  description: z.string().trim().min(1, "Description is required"),
-  category: z.enum(LISTING_CATEGORIES),
-  type: z.enum(LISTING_TYPES),
-  status: z.enum(LISTING_STATUSES),
-  price: z.string().trim().min(1, "Price is required")
-    .refine((value) => !Number.isNaN(Number(value)), "Enter a number")
-    .refine((value) => Number(value) >= 0, "Price cannot be negative"),
-});
+const schema = z
+  .object({
+    title: z.string().trim().min(1, "Title is required"),
+    subject: z.string(),
+    description: z.string().trim().min(1, "Description is required"),
+    category: z.enum(LISTING_CATEGORIES),
+    type: z.enum(LISTING_TYPES),
+    status: z.enum(LISTING_STATUSES),
+    price: z
+      .string()
+      .trim()
+      .min(1, "Price is required")
+      .refine(
+        (value) => !Number.isNaN(Number(value)),
+        "Enter a number",
+      )
+      .refine(
+        (value) => Number(value) >= 0,
+        "Price cannot be negative",
+      ),
+  })
+  .superRefine((values, ctx) => {
+    if (values.category !== "CALCULATOR" && !values.subject.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["subject"],
+        message: "Subject is required",
+      });
+    }
+  });
 
 type FormValues = z.infer<typeof schema>;
 
@@ -50,7 +69,14 @@ function EditListingModal({ listing, listingId, onClose }: {
   const updateListing = useUpdateListing();
   const [slots, setSlots] = useState<ExamSlot[]>(listing.unavailableExamSlots ?? []);
 
-  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<FormValues>({
+  const {
+  register,
+  handleSubmit,
+  watch,
+  reset,
+  setValue,
+  formState: { errors },
+} = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       title: listing.title ?? "",
@@ -76,7 +102,16 @@ function EditListingModal({ listing, listingId, onClose }: {
     setSlots(listing.unavailableExamSlots ?? []);
   }, [listing, reset]);
 
-  const selectedType = watch("type");
+const selectedType = watch("type");
+const selectedCategory = watch("category");
+
+useEffect(() => {
+  if (selectedCategory === "CALCULATOR") {
+    setValue("subject", "");
+  }
+}, [selectedCategory, setValue]);
+
+
 
   const submit = handleSubmit((values) => {
     updateListing.mutate(
@@ -84,7 +119,10 @@ function EditListingModal({ listing, listingId, onClose }: {
         listingId,
         listing: {
           title: values.title.trim(),
-          subject: values.subject.trim(),
+          subject:
+            values.category === "CALCULATOR"
+            ? null
+            : values.subject.trim(),
           description: values.description.trim(),
           category: values.category,
           type: values.type,
@@ -124,14 +162,36 @@ function EditListingModal({ listing, listingId, onClose }: {
           {(props) => <Input {...props} {...register("title")} maxLength={200} />}
         </Field>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Subject" required error={errors.subject?.message}>
-            {(props) => <Input {...props} {...register("subject")} maxLength={120} />}
-          </Field>
-          <Field label="Price (INR)" required error={errors.price?.message}>
-            {(props) => <Input {...props} {...register("price")} type="number" min={0} step="1" inputMode="decimal" />}
-          </Field>
-        </div>
+     <div className="grid gap-4 sm:grid-cols-2">
+  {selectedCategory !== "CALCULATOR" && (
+    <Field
+      label="Subject"
+      required
+      error={errors.subject?.message}
+    >
+      {(props) => (
+        <Input
+          {...props}
+          {...register("subject")}
+          maxLength={120}
+        />
+      )}
+    </Field>
+  )}
+
+  <Field label="Price (INR)" required error={errors.price?.message}>
+    {(props) => (
+      <Input
+        {...props}
+        {...register("price")}
+        type="number"
+        min={0}
+        step="1"
+        inputMode="decimal"
+      />
+    )}
+  </Field>
+</div>
 
         <Field label="Description" required error={errors.description?.message}>
           {(props) => <Textarea {...props} {...register("description")} rows={4} maxLength={3000} />}
