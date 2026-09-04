@@ -13,7 +13,6 @@ function buildChecklist(user: UserResponse | null) {
     { label: "WhatsApp number", done: filled(user?.whatsappNumber) },
     { label: "Hostel type", done: filled(user?.hostel?.type) },
     { label: "Block", done: filled(user?.hostel?.block) },
-    { label: "Room", done: filled(user?.hostel?.room) },
   ];
 }
 

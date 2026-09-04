@@ -50,7 +50,7 @@ public class AuthService {
 
             user.setEmail(googleUser.getEmail());
 
-            user.setName(googleUser.getName());
+            user.setName(cleanGoogleName(googleUser.getName()));
 
             user = userService.createUser(user);
         }
@@ -92,4 +92,14 @@ public class AuthService {
             throw new IllegalArgumentException("Invalid or expired refresh token");
         }
     }
+
+    private String cleanGoogleName(String name) {
+        if (name == null || name.isBlank()) {
+            return name;
+        }
+
+        // VIT registration numbers look like: 23BCE2343
+        return name.replaceFirst("\\s+\\d{2}[A-Za-z]{2,5}\\d{4}$", "").trim();
+    }
+
 }

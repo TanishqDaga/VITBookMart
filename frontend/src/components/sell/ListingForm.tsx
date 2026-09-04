@@ -79,7 +79,7 @@ function SectionCard({
   description,
   children,
 }: {
-  title: string;
+  title: React.ReactNode;
   description?: string;
   children: React.ReactNode;
 }) {
@@ -326,10 +326,14 @@ useEffect(() => {
 
       {/* Exam slots only apply to RENT — ListingMapper discards them for SALE. */}
       {selectedType === "RENT" && (
-        <SectionCard
-          title="Unavailable exam slots"
-          description="Select the slots when this item isn't available to rent."
-        >
+       <SectionCard
+  title={
+    <>
+      <span className="text-red-600">Unavailable</span> exam slots
+    </>
+  }
+  description="Select the slots when this item isn't available to rent."
+>
           <ExamSlotPicker value={slots} onChange={setSlots} />
         </SectionCard>
       )}

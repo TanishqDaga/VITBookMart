@@ -3,7 +3,7 @@ import { Handshake, IndianRupee, RefreshCw, ShoppingBag } from "lucide-react";
 const HIGHLIGHTS = [
   { icon: ShoppingBag, label: "Buy", body: "Get what you need for the semester." },
   { icon: IndianRupee, label: "Sell", body: "Turn last year's books into cash." },
-  { icon: RefreshCw, label: "Rent", body: "Borrow study material when you need it." },
+  { icon: RefreshCw, label: "Rent", body: "Borrow study material for CAT2 exams when you need it." },
   { icon: Handshake, label: "Connect", body: "Meet students on your own campus." },
 ];
 
@@ -16,7 +16,7 @@ export function WelcomeSection() {
             Welcome to VITBookMart
           </h2>
           <p className="mt-3 text-base leading-relaxed text-ink-muted">
-            Your campus marketplace for books, notes and study material. Buy what you need,
+            VIT Vellore campus marketplace for books, notes and Calculators. Buy what you need,
             sell what you no longer use, and rent study material when you need it.
           </p>
         </div>

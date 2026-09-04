@@ -19,7 +19,7 @@ function SlotBoard() {
       className="relative rounded-2xl border border-white/15 bg-white/[0.06] p-5 backdrop-blur-sm"
     >
       <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand-200">
-        Exam slots
+        Rent According to Exam slots Availability
       </p>
       <div className="mt-3.5 grid grid-cols-2 gap-2">
         {EXAM_SLOT_ROWS.flat().map((slot, index) => (
@@ -81,7 +81,7 @@ export function Hero() {
             </h1>
 
             <p className="mt-4 max-w-xl text-base leading-relaxed text-brand-100/85 sm:text-lg">
-              Find books, notes and study material from fellow VIT students.
+              Find books, notes and Calculators from fellow VIT students.
             </p>
 
             <div className="mt-7 max-w-xl">
@@ -92,7 +92,7 @@ export function Hero() {
                 size="lg"
                 label="Search books, notes and subjects"
                 trailing={
-                  <Button type="submit" size="sm" className="h-10 shrink-0 px-4">
+                  <Button type="submit" size="sm" className="h-10 shrink-0 px-2.5 sm:px-4">
                     Search
                   </Button>
                 }

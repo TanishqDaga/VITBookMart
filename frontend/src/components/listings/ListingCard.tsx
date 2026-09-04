@@ -52,7 +52,7 @@ export function ListingCard({
 
         {/* Type sits on the image; status only appears when it isn't the default. */}
         <div className="pointer-events-none absolute left-2.5 top-2.5 flex flex-wrap gap-1.5">
-          <Badge tone={isRent ? "accent" : "brand"} icon={<Tag className="h-3 w-3" aria-hidden />}>
+          <Badge tone={isRent ? "accent" : "brand"}className={isRent ? "bg-yellow-400 text-yellow-950 ring-1 ring-yellow-500/30" : undefined}icon={<Tag className="h-3 w-3" aria-hidden />}>
             {TYPE_LABELS[listing.type]}
           </Badge>
           {isSold && (

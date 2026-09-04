@@ -49,8 +49,7 @@ export function isProfileComplete(user: UserResponse | null): boolean {
     filled(user.whatsappNumber) &&
     user.hostel !== null &&
     filled(user.hostel.type) &&
-    filled(user.hostel.block) &&
-    filled(user.hostel.room)
+    filled(user.hostel.block)
   );
 }
 

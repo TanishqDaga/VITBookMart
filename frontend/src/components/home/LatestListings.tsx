@@ -23,7 +23,7 @@ export function LatestListings() {
 
         <Link
           to="/browse"
-          className="hidden shrink-0 items-center gap-1.5 rounded-lg text-sm font-bold text-brand-600 transition-colors hover:text-brand-700 sm:inline-flex"
+          className="hidden shrink-0 items-center gap-1.5 rounded-lg text-base font-bold text-brand-600 transition-colors hover:text-brand-700 sm:inline-flex"
         >
           View all listings
           <ArrowRight className="h-4 w-4" aria-hidden />

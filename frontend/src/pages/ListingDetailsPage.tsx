@@ -204,10 +204,12 @@ export default function ListingDetailsPage() {
           {/* Only RENT listings carry exam slots — the mapper omits them for SALE. */}
           {listing.type === "RENT" && slots.length > 0 && (
             <section className="mt-8">
-              <h2 className="flex items-center gap-2 font-display text-base font-bold">
-                <CalendarClock className="h-4 w-4 text-ink-soft" aria-hidden />
-                Unavailable exam slots
-              </h2>
+             <h2 className="flex items-center gap-2 font-display text-base font-bold">
+              <CalendarClock className="h-4 w-4 text-ink-soft" aria-hidden />
+              <span>
+                <span className="text-red-600">Unavailable</span> exam slots
+              </span>
+            </h2>
               <p className="mt-1.5 text-sm text-ink-muted">
                 The seller has marked these slots as unavailable for this item.
               </p>

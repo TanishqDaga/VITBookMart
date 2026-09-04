@@ -25,7 +25,7 @@ const schema = z.object({
     .regex(WHATSAPP_PATTERN, "Enter a 10 digit Indian mobile number, without +91"),
   hostelType: z.string().trim().min(1, "Hostel type is required"),
   hostelBlock: z.string().trim().min(1, "Block is required"),
-  hostelRoom: z.string().trim().min(1, "Room is required"),
+  hostelRoom: z.string().trim(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -162,17 +162,17 @@ export function ProfileForm({ user, onSubmit, isSubmitting }: ProfileFormProps) 
             )}
           </Field>
 
-          <Field label="Room" required error={errors.hostelRoom?.message}>
-            {(props) => (
-              <Input
-                {...props}
-                {...register("hostelRoom")}
-                maxLength={20}
-                placeholder="e.g. 412"
-                autoComplete="off"
-              />
-            )}
-          </Field>
+        <Field label="Room" error={errors.hostelRoom?.message}>
+          {(props) => (
+            <Input
+              {...props}
+              {...register("hostelRoom")}
+              maxLength={20}
+              placeholder="e.g. 412 (optional)"
+              autoComplete="off"
+            />
+          )}
+        </Field>
         </div>
       </section>
 

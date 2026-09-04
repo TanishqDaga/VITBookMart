@@ -76,8 +76,8 @@ public class UserService {
                 && hasText(user.getWhatsappNumber())
                 && user.getHostel() != null
                 && hasText(user.getHostel().getType())
-                && hasText(user.getHostel().getBlock())
-                && hasText(user.getHostel().getRoom());
+                && hasText(user.getHostel().getBlock());
+//                && hasText(user.getHostel().getRoom());
     }
 
     public void validateProfileComplete(ObjectId userId) {
