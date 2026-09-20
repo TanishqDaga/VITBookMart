@@ -207,7 +207,7 @@ export default function ListingDetailsPage() {
              <h2 className="flex items-center gap-2 font-display text-base font-bold">
               <CalendarClock className="h-4 w-4 text-ink-soft" aria-hidden />
               <span>
-                <span className="text-red-600">Unavailable</span> exam slots
+                <span className="text-red-600">Unavailable exam slots</span> 
               </span>
             </h2>
               <p className="mt-1.5 text-sm text-ink-muted">

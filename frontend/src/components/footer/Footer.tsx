@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail } from "lucide-react";
+import { Linkedin, Mail } from "lucide-react";
 import { env } from "@/config/env";
 import { SITE } from "@/constants/app";
 import { BrandMark } from "@/components/navbar/BrandMark";
@@ -52,8 +52,7 @@ export function Footer() {
               Developer: TANISHQ DAGA
             </h2>
 
-            <div className="mt-4 rounded-2xl border border-line bg-surface-muted p-4">
-            
+                        <div className="mt-4 rounded-2xl border border-line bg-surface-muted p-4">
               <p className="mt-1.5 text-[13px] leading-relaxed text-ink-muted">
                 Help improve {SITE.name} and we'll credit you here.
               </p>
@@ -73,27 +72,19 @@ export function Footer() {
               )}
             </div>
 
-            <h2 className="mt-6 text-[13px] font-bold uppercase tracking-wider text-ink-soft">
-              Contact
+                        <h2 className="mt-6 text-[13px] font-bold uppercase tracking-wider text-ink-soft">
+              Connect
             </h2>
-            <ul className="mt-3 space-y-2">
-              <li className="flex items-center gap-2 text-sm text-ink-muted">
-                <Mail className="h-4 w-4 shrink-0 text-ink-soft" aria-hidden />
-                {env.contactEmail ? (
-                  <a
-                    href={`mailto:${env.contactEmail}`}
-                    className="transition-colors hover:text-brand-600"
-                  >
-                    {env.contactEmail}
-                  </a>
-                ) : (
-                  // No real address was provided — say so rather than invent one.
-                  <span className="text-ink-soft">
-                    Set VITE_CONTACT_EMAIL to show a contact
-                  </span>
-                )}
-              </li>
-            </ul>
+
+            <a
+              href="https://www.linkedin.com/in/tanishqdaga/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-ink-muted transition-colors hover:text-brand-600"
+            >
+              <Linkedin className="h-4 w-4 shrink-0" aria-hidden />
+              LinkedIn
+            </a>
           </div>
         </div>
 

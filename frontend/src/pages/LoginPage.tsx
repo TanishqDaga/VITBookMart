@@ -51,7 +51,16 @@ export default function LoginPage() {
 
           <div className="mt-8">
             {isGoogleConfigured ? (
-              <GoogleButton fullWidth onClick={signIn} />
+              <>
+               <p className="mb-3 text-sm font-semibold text-ink">
+  Use{" "}
+  <span className="rounded-md bg-brand-50 px-2 py-1 font-extrabold text-brand-700 ring-1 ring-brand-200">
+    VIT student Google account
+  </span>
+</p>
+
+                <GoogleButton fullWidth onClick={signIn} />
+              </>
             ) : (
               <div className="rounded-xl bg-danger-50 px-4 py-3.5 text-left text-sm text-danger-700">
                 <p className="font-semibold">Google sign-in isn't configured</p>
@@ -64,15 +73,10 @@ export default function LoginPage() {
             )}
           </div>
 
-          <p className="mt-4 text-[13px] text-ink-soft">
-            Sign in using your VIT google account.
-          </p>
-
-          <div className="mt-8 flex items-start gap-2.5 rounded-xl bg-surface-muted px-4 py-3.5 text-left">
+          <div className="mt-6 flex items-start gap-2.5 rounded-xl bg-surface-muted px-4 py-3.5 text-left">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-ink-soft" aria-hidden />
             <p className="text-xs leading-relaxed text-ink-muted">
-              Please use your VIT student Google account. Your account is verified by
-              VITBookMart when you sign in.
+              Only verified VIT student accounts can access VITBookMart.
             </p>
           </div>
         </div>

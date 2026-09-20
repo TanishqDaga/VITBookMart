@@ -21,7 +21,7 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(function S
     value,
     onChange,
     onSubmit,
-    placeholder = "Find books, notes, subjects…",
+    placeholder = "Search for Subjects",
     size = "md",
     className,
     autoFocus,

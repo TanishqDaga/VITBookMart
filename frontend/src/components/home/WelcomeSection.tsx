@@ -3,7 +3,7 @@ import { Handshake, IndianRupee, RefreshCw, ShoppingBag } from "lucide-react";
 const HIGHLIGHTS = [
   { icon: ShoppingBag, label: "Buy", body: "Get what you need for the semester." },
   { icon: IndianRupee, label: "Sell", body: "Turn last year's books into cash." },
-  { icon: RefreshCw, label: "Rent", body: "Borrow study material for CAT2 exams when you need it." },
+  { icon: RefreshCw, label: "Rent", body: "Borrow study material for CAT2 exams." },
   { icon: Handshake, label: "Connect", body: "Meet students on your own campus." },
 ];
 
