@@ -59,6 +59,10 @@ export const listingApi = {
    *
    * The Content-Type header is deliberately not set by hand: the browser has to
    * generate the multipart boundary itself.
+   *
+   * The 30s default timeout is too tight here: the photo has to upload from the
+   * phone, then the backend re-uploads it to Cloudinary before it responds. A
+   * timeout mid-way also risks a duplicate listing when the user retries.
    */
   create(request: CreateListingRequest, image: File) {
     const formData = new FormData();
@@ -68,7 +72,7 @@ export const listingApi = {
     );
     formData.append("image", image);
 
-    return post<ListingResponse>("/api/listings/create", formData);
+    return post<ListingResponse>("/api/listings/create", formData, { timeout: 120_000 });
   },
 
   /**

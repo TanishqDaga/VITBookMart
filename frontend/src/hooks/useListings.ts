@@ -5,6 +5,7 @@ import { userApi } from "@/api/userApi";
 import { errorMessage } from "@/api/errors";
 import { OBJECT_ID_PATTERN } from "@/constants/app";
 import { useAuth } from "@/context/AuthContext";
+import { shrinkImageForUpload } from "@/lib/image";
 import { queryKeys } from "@/lib/queryKeys";
 import type {
   CreateListingRequest,
@@ -73,8 +74,8 @@ export function useCreateListing() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ request, image }: { request: CreateListingRequest; image: File }) =>
-      listingApi.create(request, image),
+    mutationFn: async ({ request, image }: { request: CreateListingRequest; image: File }) =>
+      listingApi.create(request, await shrinkImageForUpload(image)),
 
     onSuccess() {
       invalidatePublicFeeds(queryClient);
@@ -159,10 +160,16 @@ export function useMarkAsAvailable() {
 
 /**
  * GET /api/listings/contact/{id} — requires auth.
- * Called on demand from the confirmation dialog, not on page load.
+ *
+ * Fetched when the confirmation dialog opens, not when the user confirms. Safari
+ * only allows window.open while it runs synchronously inside the click handler;
+ * opening WhatsApp after awaiting this request gets silently popup-blocked. With
+ * the URL already in hand, the confirm click can open it directly.
  */
-export function useContactSeller() {
-  return useMutation({
-    mutationFn: (listingId: ObjectIdString) => listingApi.getContactUrl(listingId),
+export function useContactSeller(listingId: ObjectIdString | undefined, enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.listings.contact(listingId ?? ""),
+    queryFn: () => listingApi.getContactUrl(listingId as ObjectIdString),
+    enabled: enabled && Boolean(listingId),
   });
 }

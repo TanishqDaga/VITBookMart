@@ -178,7 +178,6 @@ useEffect(() => {
           <Field
             label="Subject"
             required
-            hint="Searches match the title and the subject, so use the name students would type."
             error={errors.subject?.message}
           >
             {(props) => (
@@ -196,7 +195,6 @@ useEffect(() => {
         <Field
           label="Description"
           required
-          hint="Mention the condition, edition and anything a buyer should know."
           error={errors.description?.message}
         >
           {(props) => (
@@ -211,7 +209,7 @@ useEffect(() => {
         </Field>
       </SectionCard>
 
-      <SectionCard title="Category">
+      <SectionCard title="Select Category">
         <Controller
           control={control}
           name="category"

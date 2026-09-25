@@ -8,6 +8,7 @@ import type { SearchListingsParams } from "@/types";
  *   ["listings","latest",{page,size}]  home + public feed
  *   ["listings","search",{...params}]  browse
  *   ["listings","detail",id]           listing detail page
+ *   ["listings","contact",id]          seller's WhatsApp URL (auth only)
  *   ["me"]                             current user profile
  *   ["me","listings"]                  my listings
  *   ["wishlist"]                       the signed-in user's wishlist
@@ -20,6 +21,7 @@ export const queryKeys = {
     search: (params: SearchListingsParams) => ["listings", "search", params] as const,
     searchAll: ["listings", "search"] as const,
     detail: (id: string) => ["listings", "detail", id] as const,
+    contact: (id: string) => ["listings", "contact", id] as const,
   },
   me: {
     profile: ["me"] as const,

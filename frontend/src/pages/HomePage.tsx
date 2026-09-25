@@ -14,9 +14,9 @@ export default function HomePage() {
     <>
       <Hero />
       <QuickCategories />
+      <LatestListings />
       <WelcomeSection />
       <UserGuide />
-      <LatestListings />
       <SellCta />
     </>
   );

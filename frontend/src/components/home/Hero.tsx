@@ -84,7 +84,7 @@ export function Hero() {
               Find books, notes and Calculators from fellow VIT students.
             </p>
 
-            <div className="mt-7 max-w-xl">
+            <div className="mx-auto mt-7 w-[calc(100%-1rem)] min-w-0 max-w-xl sm:mx-0 sm:w-full">
               <SearchBar
                 value={query}
                 onChange={setQuery}
@@ -111,8 +111,7 @@ export function Hero() {
               <ButtonLink
                 to="/sell"
                 size="lg"
-                variant="ghost"
-                className="border border-white/25 text-white hover:bg-white/10 hover:text-white"
+                className="bg-accent-500 text-white shadow-sm hover:bg-accent-400"
               >
                 <Plus className="h-4 w-4" aria-hidden />
                 Sell something

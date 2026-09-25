@@ -65,8 +65,45 @@ function endSession() {
 // Request: attach the access token
 // ---------------------------------------------------------------------------
 
-api.interceptors.request.use((config) => {
-  const token = tokenStore.getAccessToken();
+/** Refresh a little before the real expiry so the token can't lapse in flight. */
+const EXPIRY_MARGIN_MS = 30_000;
+
+/** Reads the JWT `exp` claim. Returns null for anything that doesn't parse. */
+function readExpiryMs(token: string): number | null {
+  try {
+    const payload = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    const { exp } = JSON.parse(atob(payload)) as { exp?: unknown };
+    return typeof exp === "number" ? exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
+function isExpiringSoon(token: string): boolean {
+  const expiry = readExpiryMs(token);
+  return expiry !== null && expiry - EXPIRY_MARGIN_MS <= Date.now();
+}
+
+api.interceptors.request.use(async (config) => {
+  let token = tokenStore.getAccessToken();
+
+  /**
+   * Relying on the 401-then-replay path below fails for uploads: the server
+   * rejects the stale token before reading the multipart body, then drops the
+   * connection mid-upload. Browsers (Safari especially) report that as a network
+   * error with no response, so the 401 never reaches the refresh logic and
+   * "Post listing" fails. Refreshing up front sidesteps it for every request.
+   */
+  if (
+    token &&
+    !isAuthEndpoint(config.url) &&
+    tokenStore.getRefreshToken() !== null &&
+    isExpiringSoon(token)
+  ) {
+    // On failure keep the old token; the 401 handler decides whether the session is over.
+    token = (await requestRefresh()) ?? token;
+  }
+
   if (token && !isAuthEndpoint(config.url)) {
     config.headers.set("Authorization", `Bearer ${token}`);
     (config as RetriableRequest)._accessTokenUsed = token;

@@ -1,5 +1,5 @@
 import { useCallback, useId, useRef, useState } from "react";
-import { ImagePlus, Trash2, Upload } from "lucide-react";
+import { Camera, ImagePlus, Trash2, Upload } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { formatFileSize } from "@/lib/format";
 import {
@@ -36,6 +36,7 @@ export function ImageUploader({
   error,
 }: ImageUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const [dragging, setDragging] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -43,6 +44,7 @@ export function ImageUploader({
 
   const descriptionId = useId();
   const inputId = useId();
+  const cameraInputId = useId();
 
   const accept = useCallback(
     (candidate: File | undefined) => {
@@ -86,6 +88,9 @@ export function ImageUploader({
 
     if (inputRef.current) {
       inputRef.current.value = "";
+    }
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = "";
     }
   };
 
@@ -149,6 +154,17 @@ export function ImageUploader({
             accept(event.target.files?.[0]);
           }}
         />
+        <input
+          id={cameraInputId}
+          ref={cameraInputRef}
+          type="file"
+          accept={ACCEPTED_IMAGE_EXTENSIONS}
+          capture="environment"
+          className="sr-only"
+          onChange={(event) => {
+            accept(event.target.files?.[0]);
+          }}
+        />
 
         {shownError && (
           <p
@@ -196,7 +212,7 @@ export function ImageUploader({
         <label
           htmlFor={inputId}
           aria-describedby={descriptionId}
-          className="flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl px-6 py-10 text-center"
+          className="flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl px-6 py-6 text-center"
         >
           <span
             aria-hidden
@@ -206,7 +222,7 @@ export function ImageUploader({
           </span>
 
           <span className="mt-1 text-sm font-semibold text-ink">
-            Drop a photo here, or tap to choose
+            Drop a photo here, or choose an option below
           </span>
 
           <span
@@ -218,11 +234,39 @@ export function ImageUploader({
         </label>
       </div>
 
+      <div className="flex flex-wrap gap-3">
+        <label
+          htmlFor={inputId}
+          className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-line-strong bg-white px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-brand-300 hover:bg-brand-50"
+        >
+          <ImagePlus className="h-4 w-4" aria-hidden />
+          Choose from gallery
+        </label>
+        <label
+          htmlFor={cameraInputId}
+          className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-line-strong bg-white px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-brand-300 hover:bg-brand-50"
+        >
+          <Camera className="h-4 w-4" aria-hidden />
+          Take a photo
+        </label>
+      </div>
+
       <input
         id={inputId}
         ref={inputRef}
         type="file"
         accept={ACCEPTED_IMAGE_EXTENSIONS}
+        className="sr-only"
+        onChange={(event) => {
+          accept(event.target.files?.[0]);
+        }}
+      />
+      <input
+        id={cameraInputId}
+        ref={cameraInputRef}
+        type="file"
+        accept={ACCEPTED_IMAGE_EXTENSIONS}
+        capture="environment"
         className="sr-only"
         onChange={(event) => {
           accept(event.target.files?.[0]);

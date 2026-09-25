@@ -11,7 +11,7 @@ import {
   Tag,
   User,
 } from "lucide-react";
-import { toApiError } from "@/api/errors";
+import { errorMessage, toApiError } from "@/api/errors";
 import { CATEGORY_LABELS, TYPE_LABELS } from "@/constants/labels";
 import { formatDate, formatPrice, formatRelativeDate, toIsoString } from "@/lib/format";
 import { useAuth } from "@/context/AuthContext";
@@ -45,9 +45,9 @@ export default function ListingDetailsPage() {
   const { data: myListings } = useMyListings();
   const isOwner = Boolean(myListings?.some((item) => item.id === listingId));
 
-  const contact = useContactSeller();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [signInOpen, setSignInOpen] = useState(false);
+  const contact = useContactSeller(listingId, confirmOpen);
 
   if (isPending) return <DetailSkeleton />;
 
@@ -88,13 +88,23 @@ export default function ListingDetailsPage() {
   };
 
   const openWhatsApp = () => {
-    contact.mutate(listingId as string, {
-      onSuccess(response) {
-        setConfirmOpen(false);
-        // The backend builds the wa.me URL itself; we open exactly what it returns.
-        window.open(response.whatsappUrl, "_blank", "noopener,noreferrer");
-      },
-    });
+    if (!contact.data) {
+      // Only reachable after the lookup failed — the button is busy while it loads.
+      void contact.refetch();
+      return;
+    }
+
+    // The backend supplies the seller's wa.me URL; URLSearchParams safely
+    // encodes the listing title into WhatsApp's prefilled-message parameter.
+    const whatsappUrl = new URL(contact.data.whatsappUrl);
+    whatsappUrl.searchParams.set(
+      "text",
+      `Hii! I saw your "${listing.title}" on VITBookMart, is it available?`,
+    );
+    setConfirmOpen(false);
+    // Must stay synchronous inside the click: Safari blocks window.open as a
+    // popup once an await sits between the tap and the call.
+    window.open(whatsappUrl.toString(), "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -252,8 +262,7 @@ export default function ListingDetailsPage() {
             </div>
 
             <p className="mt-4 text-xs leading-relaxed text-ink-soft">
-              Choosing "Contact seller" opens WhatsApp with
-              the number the seller registered.
+              Choosing "Contact seller" opens WhatsApp with a prefilled message for this listing.
             </p>
           </section>
 
@@ -284,9 +293,15 @@ export default function ListingDetailsPage() {
         onConfirm={openWhatsApp}
         title="Contact this seller on WhatsApp?"
         description="You'll be redirected to WhatsApp to contact the seller."
-        confirmLabel="Continue to WhatsApp"
-        isLoading={contact.isPending}
-      />
+        confirmLabel={contact.isError ? "Try again" : "Continue to WhatsApp"}
+        isLoading={!contact.data && contact.isFetching}
+      >
+        {contact.isError && !contact.isFetching && (
+          <p role="alert" className="text-sm font-medium text-danger-600">
+            {errorMessage(contact.error)}
+          </p>
+        )}
+      </ConfirmDialog>
 
       <SignInPrompt
         open={signInOpen}

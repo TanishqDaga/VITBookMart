@@ -50,6 +50,12 @@ export function toApiError(error: unknown): ApiError {
     if (error.code === "ERR_CANCELED") {
       return { kind: "unknown", message: "Request cancelled." };
     }
+    if (error.code === "ECONNABORTED" || error.code === "ETIMEDOUT") {
+      return {
+        kind: "network",
+        message: "That took too long — your connection may be slow. Try again.",
+      };
+    }
     return {
       kind: "network",
       message: navigator.onLine

@@ -42,7 +42,7 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(function S
       role="search"
       onSubmit={handleSubmit}
       className={cn(
-        "flex w-full items-center gap-2 rounded-2xl border border-line bg-white",
+        "flex w-full min-w-0 items-center gap-2 rounded-2xl border border-line bg-white",
         "shadow-card transition-shadow focus-within:border-brand-400 focus-within:shadow-card-hover",
         large ? "h-14 pl-4 pr-2" : "h-12 pl-3.5 pr-2",
         className,
@@ -63,9 +63,11 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(function S
         autoFocus={autoFocus}
         // The browser's own clear button would sit on top of ours.
         className={cn(
-          "min-w-0 flex-1 bg-transparent text-ink placeholder:text-ink-soft/80 focus:outline-none",
+          "w-0 min-w-0 flex-1 bg-transparent text-ink placeholder:text-ink-soft/80 focus:outline-none",
           "[&::-webkit-search-cancel-button]:appearance-none",
-          large ? "text-base" : "text-sm",
+          // iOS Safari zooms focused inputs below 16px. Keep the compact
+          // desktop treatment while preventing that automatic mobile zoom.
+          large ? "text-base" : "text-base sm:text-sm",
         )}
       />
 
